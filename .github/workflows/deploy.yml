@@ -23,7 +23,6 @@ jobs:
 
       - name: Build Vite static export
         run: |
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
           npm run build
 
       - name: Deploy to Cloudflare Pages
@@ -31,7 +30,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=visual-terminal
+          command: pages deploy dist --project-name=file60
 
       - name: Deployment Summary
         run: |
