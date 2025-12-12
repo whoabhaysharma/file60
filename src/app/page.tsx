@@ -1,10 +1,12 @@
+'use client';
+
 import React, { useState, useEffect, useCallback } from 'react';
-import Marquee from './components/Marquee';
-import Uploader from './components/Uploader';
-import FileCard from './components/FileCard';
-import GlobalDragOverlay from './components/GlobalDragOverlay';
-import { FileItem, UploadResponse } from './types';
-import { STORAGE_KEY, EXPIRATION_TIME, UPLOAD_API_URL } from './constants';
+import Marquee from '@/components/Marquee';
+import Uploader from '@/components/Uploader';
+import FileCard from '@/components/FileCard';
+import GlobalDragOverlay from '@/components/GlobalDragOverlay';
+import { FileItem, UploadResponse } from '@/types';
+import { STORAGE_KEY, EXPIRATION_TIME, UPLOAD_API_URL } from '@/constants';
 
 const App: React.FC = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -154,7 +156,7 @@ const App: React.FC = () => {
       }
       uploadFile(file);
     }
-  }, [files]); // Dependency on files needed for closure? No, uploadFile uses functional state updates downstream.
+  }, [files]);
 
   return (
     <div 

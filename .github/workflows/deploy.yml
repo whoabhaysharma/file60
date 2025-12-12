@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Vite static export
+      - name: Build Next.js static export
         run: |
           npm run build
 
@@ -30,7 +30,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=file60
+          command: pages deploy out --project-name=file60
 
       - name: Deployment Summary
         run: |
