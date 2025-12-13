@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+:root {
+  --background: #e0e0e0;
+  --foreground: #000000;
+}
+
+body {
+  font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow: hidden; /* Prevent body scroll, handle in containers */
+}
+
+/* Scanline Effect */
+.scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.15),
+        rgba(0,0,0,0.15) 1px,
+        transparent 1px,
+        transparent 3px
+    );
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Marquee Animation */
+@keyframes scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+.animate-scroll {
+    animation: scroll 20s linear infinite;
+}
+
+/* Custom Scrollbar for Vault */
+::-webkit-scrollbar {
+    width: 10px;
+}
+::-webkit-scrollbar-track {
+    background: #e0e0e0;
+    border-left: 3px solid #000;
+}
+::-webkit-scrollbar-thumb {
+    background: #000;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #00ff41;
+}
+
+/* Utility for brutalist shadows */
+.shadow-hard {
+    box-shadow: 8px 8px 0px 0px #000;
+}
+.shadow-hard-hover:hover {
+    box-shadow: 12px 12px 0px 0px #000;
+}
+.shadow-hard-sm {
+    box-shadow: 4px 4px 0px 0px #000;
+}
+.shadow-hard-sm-hover:hover {
+    box-shadow: 6px 6px 0px 0px #000;
+}
+.shadow-none-active:active {
+    box-shadow: 0px 0px 0px 0px #000;
+}
+
+/* Background Pattern for Drop Zone */
+.bg-pattern-stripe {
+    background-image: repeating-linear-gradient(45deg, #ddd 0, #ddd 1px, transparent 0, transparent 10px);
+}
