@@ -5,7 +5,7 @@ import Marquee from '@/components/Marquee';
 import Uploader from '@/components/Uploader';
 import FileCard from '@/components/FileCard';
 import GlobalDragOverlay from '@/components/GlobalDragOverlay';
-import { FileItem, UploadResponse } from '@/types';
+import { FileItem } from '@/types';
 import { STORAGE_KEY, EXPIRATION_TIME, UPLOAD_API_URL } from '@/constants';
 
 const App: React.FC = () => {
@@ -55,13 +55,10 @@ const App: React.FC = () => {
   };
 
   const addFile = (name: string, url: string, type: string) => {
-    // Convert generic tmpfiles URL to download URL for embedding
-    const dlUrl = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-    
     const newFile: FileItem = {
       id: Date.now().toString(),
       name,
-      url: dlUrl,
+      url: url,
       type,
       expires: Date.now() + EXPIRATION_TIME,
     };
@@ -72,45 +69,59 @@ const App: React.FC = () => {
     saveFiles(files.filter(f => f.id !== id));
   };
 
-  const uploadFile = (file: File) => {
+  const uploadFile = async (file: File) => {
     setIsUploading(true);
     setUploadProgress(0);
 
-    const fd = new FormData();
-    fd.append('file', file);
+    try {
+      // 1. Get Presigned URL
+      const res = await fetch(UPLOAD_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filename: file.name,
+          fileType: file.type || 'application/octet-stream',
+        }),
+      });
 
-    const xhr = new XMLHttpRequest();
+      if (!res.ok) throw new Error('Failed to get upload URL');
+      const { uploadUrl, publicUrl } = await res.json();
 
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const pct = Math.round((e.loaded / e.total) * 100);
-        setUploadProgress(pct);
-      }
-    };
-
-    xhr.onload = () => {
-      setIsUploading(false);
-      if (xhr.status === 200) {
-        try {
-          const res: UploadResponse = JSON.parse(xhr.responseText);
-          if (res.status === 'success') {
-            addFile(file.name, res.data.url, file.type);
-          }
-        } catch (e) {
-          alert('Upload failed: Invalid response');
+      // 2. Upload File to R2
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          setUploadProgress(pct);
         }
-      } else {
-        alert('Upload failed');
-      }
-    };
+      };
 
-    xhr.onerror = () => {
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+           addFile(file.name, publicUrl, file.type);
+           setIsUploading(false);
+        } else {
+           alert('Upload failed');
+           setIsUploading(false);
+        }
+      };
+
+      xhr.onerror = () => {
+        alert('Upload failed: Network error');
+        setIsUploading(false);
+      };
+
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+      xhr.send(file);
+
+    } catch (e) {
+      console.error(e);
+      alert('Upload failed');
       setIsUploading(false);
-      alert('Upload failed: Network error');
-    };
-
-    xhr.open('POST', UPLOAD_API_URL);
-    xhr.send(fd);
+    }
   };
 
   // Drag & Drop Handlers
@@ -118,26 +129,13 @@ const App: React.FC = () => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(true);
-
-    let hasInvalid = false;
-    if (e.dataTransfer.items) {
-      for (let i = 0; i < e.dataTransfer.items.length; i++) {
-        const item = e.dataTransfer.items[i];
-        if (item.kind === 'file') {
-          if (!item.type.startsWith('image/') && !item.type.startsWith('video/')) {
-            hasInvalid = true;
-            break;
-          }
-        }
-      }
-    }
-    setDragValid(!hasInvalid);
+    // All files are valid now
+    setDragValid(true);
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only set false if leaving the window or main container (simple approximation)
     if (e.relatedTarget === null) {
         setDragActive(false);
     }
@@ -150,17 +148,14 @@ const App: React.FC = () => {
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-          alert("INVALID FORMAT. ONLY IMAGES OR VIDEOS ALLOWED.");
-          return;
-      }
+      // No validation needed for file type
       uploadFile(file);
     }
   }, [files]);
 
   return (
     <div 
-      className="flex flex-col h-screen overflow-hidden relative"
+      className="flex flex-col h-[100dvh] overflow-hidden relative"
       onDragEnter={handleDragEnter}
     >
       <GlobalDragOverlay 
