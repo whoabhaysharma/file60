@@ -21,10 +21,7 @@ const Uploader: React.FC<UploaderProps> = ({ onUploadStart, isUploading, progres
       alert("FILE TOO LARGE (MAX 100MB)");
       return;
     }
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-      alert("INVALID FORMAT. ONLY IMAGES OR VIDEOS ALLOWED.");
-      return;
-    }
+    // No file type restriction
     onUploadStart(file);
     // Reset input
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -51,7 +48,7 @@ const Uploader: React.FC<UploaderProps> = ({ onUploadStart, isUploading, progres
               UPLOAD MEDIA
             </div>
             <div className="mt-[10px] font-bold text-xs bg-black text-white px-2 py-1 z-10">
-              IMG / VID ONLY
+              ALL FILES
             </div>
           </>
         )}
@@ -74,7 +71,7 @@ const Uploader: React.FC<UploaderProps> = ({ onUploadStart, isUploading, progres
           type="file" 
           ref={fileInputRef} 
           className="hidden" 
-          accept="image/*,video/*"
+          // accept removed to allow all files
           onChange={handleFileChange}
         />
       </div>

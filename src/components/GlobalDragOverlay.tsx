@@ -22,7 +22,7 @@ const GlobalDragOverlay: React.FC<GlobalDragOverlayProps> = ({ isVisible, isVali
       <div 
         className="text-[5rem] font-[900] text-black bg-white p-5 shadow-[10px_10px_0_#000] -rotate-2 text-center uppercase pointer-events-none"
       >
-        {isValid ? 'DROP IT, MAN!! 🟢' : 'BROO!! PICS/VIDS ONLY 🛑'}
+        {isValid ? 'DROP IT, MAN!! 🟢' : 'ERROR! 🛑'}
       </div>
     </div>
   );
