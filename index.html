@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FILE60 // VISUAL TERMINAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['"Courier Prime"', 'monospace'],
+                    },
+                    colors: {
+                        bg: '#e0e0e0',
+                        core: '#ffffff',
+                        ink: '#000000',
+                        accent: '#00ff41',
+                        alert: '#ff2a00',
+                    },
+                    boxShadow: {
+                        'hard': '8px 8px 0px 0px #000',
+                        'hard-hover': '12px 12px 0px 0px #000',
+                        'hard-sm': '4px 4px 0px 0px #000',
+                        'hard-sm-hover': '6px 6px 0px 0px #000',
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Courier Prime', monospace;
+            background-color: #e0e0e0;
+            color: #000;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        /* Scanline Effect */
+        .scanlines::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0,0,0,0.1),
+                rgba(0,0,0,0.1) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e0e0e0;
+            border-left: 3px solid #000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #000;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00ff41;
+        }
+
+        .bg-pattern-stripe {
+            background-image: repeating-linear-gradient(45deg, #ddd 0, #ddd 1px, transparent 0, transparent 10px);
+        }
+    </style>
+</head>
+<body class="h-[100dvh] flex flex-col relative" ondragenter="handleGlobalDragEnter(event)">
+
+    <!-- Global Drag Overlay -->
+    <div id="drag-overlay" class="fixed inset-0 z-[9999] flex flex-col justify-center items-center bg-[#00ff41]/90 hidden transition-opacity duration-200"
+         ondragleave="handleGlobalDragLeave(event)" ondragover="event.preventDefault()" ondrop="handleGlobalDrop(event)">
+         <div id="drag-message" class="text-[3rem] md:text-[5rem] font-[900] text-black bg-white p-5 shadow-[10px_10px_0_#000] -rotate-2 text-center uppercase pointer-events-none select-none">
+            DROP IT, MAN!! 🟢
+         </div>
+    </div>
+
+    <!-- Main Layout -->
+    <main class="flex-grow grid grid-cols-1 grid-rows-[auto_1fr] md:grid-rows-1 md:grid-cols-[400px_1fr] overflow-hidden h-full">
+
+        <!-- Uploader Section -->
+        <div class="bg-white border-b-[3px] md:border-b-0 md:border-r-[3px] border-black flex flex-col p-[20px] md:p-[30px] relative z-10 h-auto md:h-full flex-shrink-0">
+            <!-- Brand -->
+            <div class="font-black text-[3rem] md:text-[4rem] leading-[0.8] tracking-[-3px] mb-[20px] md:mb-[30px] skew-x-[-5deg] select-none">
+                FILE<br/>60.
+            </div>
+
+            <!-- Upload Zone -->
+            <div id="upload-zone" onclick="triggerFileInput()"
+                 class="flex-grow min-h-[200px] border-[3px] border-black bg-[#f0f0f0] bg-pattern-stripe flex flex-col justify-center items-center cursor-pointer relative transition-colors hover:bg-[#00ff41] text-black group overflow-hidden">
+
+                <div id="upload-default" class="flex flex-col items-center">
+                    <div class="font-[900] text-xl md:text-2xl uppercase bg-white p-[10px] border-[3px] border-black shadow-[5px_5px_0_#000] text-center z-10 select-none group-hover:shadow-[7px_7px_0_#000] transition-shadow">
+                        UPLOAD MEDIA
+                    </div>
+                    <div class="mt-[10px] font-bold text-xs bg-black text-white px-2 py-1 z-10">
+                        IMG / VID ONLY
+                    </div>
+                </div>
+
+                <!-- Progress Overlay -->
+                <div id="upload-progress" class="hidden absolute inset-0 bg-white flex-col justify-center items-center p-5 z-20">
+                    <div class="font-[900] text-[1.5rem] animate-pulse">UPLOADING</div>
+                    <div class="w-full h-[30px] border-[3px] border-black mt-2">
+                        <div id="progress-bar" class="h-full bg-black transition-all duration-100 ease-linear" style="width: 0%"></div>
+                    </div>
+                    <div id="progress-text" class="mt-1 font-bold">0%</div>
+                </div>
+
+                <input type="file" id="file-input" class="hidden" accept="image/*,video/*" onchange="handleFileSelect(event)">
+            </div>
+
+            <div class="mt-4 text-xs font-bold text-center opacity-50">
+                FILES AUTO-DELETE IN 60 MINS
+            </div>
+        </div>
+
+        <!-- File List Section -->
+        <div class="bg-[#e0e0e0] p-[20px] md:p-[30px] overflow-y-auto flex flex-col gap-5 h-full relative" id="file-list-container">
+            <!-- Files injected here -->
+            <div id="empty-state" class="hidden flex-grow flex justify-center items-center opacity-30 text-[2rem] md:text-[3rem] font-[900] -rotate-[10deg] pointer-events-none select-none h-full">
+                NO MEDIA
+            </div>
+
+            <div id="file-grid" class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5 pb-10">
+                <!-- File Cards -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Constants & State ---
+        const STORAGE_KEY = 'file60_storage_v2';
+        const UPLOAD_API_URL = 'https://tmpfiles.org/api/v1/upload';
+        const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+        const EXPIRATION_TIME = 60 * 60 * 1000; // 60 Minutes
+
+        let files = [];
+        let isUploading = false;
+        let dragCounter = 0;
+
+        // --- Init ---
+        function init() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    files = JSON.parse(saved);
+                    // Filter out expired on load
+                    const now = Date.now();
+                    files = files.filter(f => now < f.expires);
+                    saveFiles();
+                } catch (e) {
+                    console.error("Storage parse error", e);
+                }
+            }
+            render();
+
+            // Timer for countdowns and expiration
+            setInterval(() => {
+                const now = Date.now();
+                const validFiles = files.filter(f => now < f.expires);
+                if (validFiles.length !== files.length) {
+                    files = validFiles;
+                    saveFiles();
+                    render();
+                } else {
+                    updateTimers(now);
+                }
+            }, 1000);
+        }
+
+        function saveFiles() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(files));
+        }
+
+        // --- Core Logic ---
+        function addFile(name, url, type) {
+            // Convert to download URL for embedding if using tmpfiles.org
+            const dlUrl = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+
+            const newFile = {
+                id: Date.now().toString(),
+                name,
+                url: dlUrl,
+                type,
+                expires: Date.now() + EXPIRATION_TIME,
+            };
+            files.unshift(newFile); // Add to top
+            saveFiles();
+            render();
+        }
+
+        function removeFile(id) {
+            files = files.filter(f => f.id !== id);
+            saveFiles();
+            render();
+        }
+
+        function uploadFile(file) {
+            if (isUploading) return;
+            if (file.size > MAX_FILE_SIZE) {
+                alert("FILE TOO LARGE (MAX 100MB)");
+                return;
+            }
+            if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                alert("INVALID FORMAT. ONLY IMAGES OR VIDEOS ALLOWED.");
+                return;
+            }
+
+            isUploading = true;
+            updateUploadUI(0, true);
+
+            const fd = new FormData();
+            fd.append('file', file);
+
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    updateUploadUI(pct, true);
+                }
+            };
+
+            xhr.onload = () => {
+                isUploading = false;
+                updateUploadUI(0, false);
+                if (xhr.status === 200) {
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (res.status === 'success') {
+                            addFile(file.name, res.data.url, file.type);
+                        } else {
+                            alert('Upload API returned error');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert('Upload failed: Invalid response');
+                    }
+                } else {
+                    alert('Upload failed: ' + xhr.statusText);
+                }
+            };
+
+            xhr.onerror = () => {
+                isUploading = false;
+                updateUploadUI(0, false);
+                alert('Upload failed: Network error');
+            };
+
+            xhr.open('POST', UPLOAD_API_URL);
+            xhr.send(fd);
+        }
+
+        // --- DOM Interaction ---
+        function triggerFileInput() {
+            if(!isUploading) document.getElementById('file-input').click();
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files && e.target.files.length > 0) {
+                uploadFile(e.target.files[0]);
+                e.target.value = ''; // Reset
+            }
+        }
+
+        function updateUploadUI(progress, active) {
+            const defaultUI = document.getElementById('upload-default');
+            const progressUI = document.getElementById('upload-progress');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+
+            if (active) {
+                defaultUI.classList.add('hidden');
+                progressUI.classList.remove('hidden');
+                progressUI.style.display = 'flex'; // Ensure flex
+                progressBar.style.width = `${progress}%`;
+                progressText.innerText = `${progress}%`;
+            } else {
+                defaultUI.classList.remove('hidden');
+                progressUI.classList.add('hidden');
+                progressUI.style.display = 'none';
+            }
+        }
+
+        // --- Drag & Drop ---
+        function handleGlobalDragEnter(e) {
+            e.preventDefault();
+            dragCounter++;
+            const overlay = document.getElementById('drag-overlay');
+            const msg = document.getElementById('drag-message');
+
+            // Check file type
+            let hasInvalid = false;
+            if (e.dataTransfer.items) {
+                for (let i = 0; i < e.dataTransfer.items.length; i++) {
+                    const item = e.dataTransfer.items[i];
+                    if (item.kind === 'file' && (!item.type.startsWith('image/') && !item.type.startsWith('video/'))) {
+                        hasInvalid = true;
+                    }
+                }
+            }
+
+            if (hasInvalid) {
+                overlay.classList.remove('bg-[#00ff41]/90');
+                overlay.classList.add('bg-[#ff2a00]/90');
+                msg.innerText = 'BROO!! PICS/VIDS ONLY 🛑';
+            } else {
+                overlay.classList.remove('bg-[#ff2a00]/90');
+                overlay.classList.add('bg-[#00ff41]/90');
+                msg.innerText = 'DROP IT, MAN!! 🟢';
+            }
+
+            overlay.classList.remove('hidden');
+        }
+
+        function handleGlobalDragLeave(e) {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter === 0) {
+                document.getElementById('drag-overlay').classList.add('hidden');
+            }
+        }
+
+        function handleGlobalDrop(e) {
+            e.preventDefault();
+            dragCounter = 0;
+            document.getElementById('drag-overlay').classList.add('hidden');
+
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                uploadFile(e.dataTransfer.files[0]);
+            }
+        }
+
+        // --- Rendering ---
+        function render() {
+            const grid = document.getElementById('file-grid');
+            const empty = document.getElementById('empty-state');
+
+            if (files.length === 0) {
+                empty.classList.remove('hidden');
+                grid.innerHTML = '';
+                return;
+            }
+
+            empty.classList.add('hidden');
+
+            // Re-build grid (simple approach, for better performance could use diffing but for this list size innerHTML is fine)
+            grid.innerHTML = files.map(file => createFileCardHTML(file)).join('');
+
+            updateTimers(Date.now());
+        }
+
+        function createFileCardHTML(file) {
+            const isVideo = file.type.startsWith('video');
+            return `
+            <div class="bg-white border-[3px] border-black shadow-hard hover:shadow-hard-hover transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] p-4 flex flex-col gap-4 group/card">
+                <!-- Media Preview -->
+                <div class="w-full h-[200px] bg-black border-[3px] border-black relative flex justify-center items-center overflow-hidden scanlines group hover:border-accent">
+                    <div class="absolute top-0 left-0 bg-accent text-black font-[900] text-[0.7rem] px-2 py-1 z-[5] border-b-2 border-r-2 border-black">
+                        [${isVideo ? 'VID' : 'IMG'}]
+                    </div>
+                    ${isVideo ? `
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1] text-accent pointer-events-none transition-transform duration-100 group-hover:scale-110 drop-shadow-[4px_4px_0_#000]">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>
+                        </div>
+                        <video class="w-full h-full object-cover opacity-90 group-hover:opacity-100 grayscale-[20%] contrast-[110%] group-hover:filter-none transition-all duration-200 pointer-events-none" src="${file.url}" muted playsinline preload="metadata"></video>
+                    ` : `
+                        <img src="${file.url}" alt="preview" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 grayscale-[20%] contrast-[110%] group-hover:filter-none transition-all duration-200 pointer-events-none"/>
+                    `}
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex gap-2">
+                    <button onclick="copyToClipboard('${file.url}', this)" class="flex-grow border-[2px] border-black font-bold text-lg p-3 shadow-hard-sm hover:shadow-hard-sm-hover active:shadow-none-active active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-2 bg-accent text-black hover:bg-white">
+                        COPY LINK
+                    </button>
+                    <button onclick="removeFile('${file.id}')" class="bg-alert text-white w-[50px] border-[2px] border-black font-bold text-lg shadow-hard-sm hover:bg-black flex items-center justify-center active:shadow-none-active active:translate-x-[2px] active:translate-y-[2px] transition-all">
+                        X
+                    </button>
+                </div>
+
+                <!-- Timer -->
+                <div class="border-[2px] border-black h-[24px] bg-[#ddd] relative overflow-hidden">
+                    <div id="bar-${file.id}" class="h-full transition-all duration-1000 linear bg-black" style="width: 100%"></div>
+                    <div id="time-${file.id}" class="absolute inset-0 flex items-center justify-center text-[0.8rem] font-bold text-white mix-blend-difference pointer-events-none">60:00</div>
+                </div>
+            </div>
+            `;
+        }
+
+        function updateTimers(now) {
+            files.forEach(file => {
+                const diff = file.expires - now;
+                const totalDuration = 60 * 60 * 1000;
+                const pct = Math.max(0, (diff / totalDuration) * 100);
+
+                const m = Math.floor(Math.max(0, diff) / 60000);
+                const s = Math.floor((Math.max(0, diff) % 60000) / 1000);
+                const timeString = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+                const bar = document.getElementById(`bar-${file.id}`);
+                const text = document.getElementById(`time-${file.id}`);
+
+                if (bar && text) {
+                    bar.style.width = `${pct}%`;
+                    text.innerText = timeString;
+                    if (diff < 10 * 60 * 1000) {
+                        bar.classList.remove('bg-black');
+                        bar.classList.add('bg-alert');
+                    } else {
+                         bar.classList.add('bg-black');
+                         bar.classList.remove('bg-alert');
+                    }
+                }
+            });
+        }
+
+        function copyToClipboard(url, btn) {
+            navigator.clipboard.writeText(url).then(() => {
+                const originalText = btn.innerText;
+                const originalBg = btn.classList.contains('bg-accent'); // Check if it was green
+
+                btn.innerText = 'COPIED!';
+                btn.classList.remove('bg-accent', 'hover:bg-white');
+                btn.classList.add('bg-white', 'text-black');
+
+                setTimeout(() => {
+                    btn.innerText = 'COPY LINK';
+                    btn.classList.remove('bg-white', 'text-black');
+                    btn.classList.add('bg-accent', 'hover:bg-white');
+                }, 1000);
+            });
+        }
+
+        // Start
+        window.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
