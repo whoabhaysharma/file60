@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
 const CONFIG = {
   // 1. REPLACE THIS with your R2 Public Bucket URL or Custom Domain
-  R2_PUBLIC_URL: "https://pub-c8af0fd55b6347e8a948441a6a4dd059.r2.dev", 
+  R2_PUBLIC_URL: "https://pub-c8af0fd55b6347e8a948441a6a4dd059.r2.dev",
   MAX_FILE_SIZE: 5 * 1024 * 1024,
   RATE_LIMIT_HITS: 20,
   EXPIRY_MS: 1 * 60 * 60 * 1000,
@@ -55,7 +55,7 @@ async function withAuth(req, env, ctx, handler) {
 async function checkRateLimit(ip, ctx) {
   const cache = caches.default;
   const cacheKey = new Request(`https://ratelimit.local/ip/${ip}`);
-  
+
   let cachedRes = await cache.match(cacheKey);
   let count = cachedRes ? parseInt(await cachedRes.text()) : 0;
 
@@ -64,9 +64,9 @@ async function checkRateLimit(ip, ctx) {
   }
 
   const response = new Response((count + 1).toString(), {
-    headers: { "Cache-Control": "max-age=3600" } 
+    headers: { "Cache-Control": "max-age=3600" }
   });
-  
+
   ctx.waitUntil(cache.put(cacheKey, response));
 }
 
@@ -75,7 +75,7 @@ async function checkRateLimit(ip, ctx) {
 async function initSession(secret) {
   const now = Math.floor(Date.now() / 1000);
   const token = await createJWT({ iat: now, exp: now + 86400 }, secret);
-  return json({ 
+  return json({
     token,
     config: {
       maxFileSize: CONFIG.MAX_FILE_SIZE,
@@ -94,7 +94,7 @@ async function createFile(req, env) {
   const contentType = req.headers.get("Content-Type") || "application/octet-stream";
   const fileId = crypto.randomUUID();
   const content = await req.arrayBuffer();
-  
+
   const objectKey = `temp/${fileId}`;
 
   // Calculate expiry
@@ -105,10 +105,12 @@ async function createFile(req, env) {
     customMetadata: { expires: expiryTimestamp.toString() }
   });
 
-  const publicUrl = `${CONFIG.R2_PUBLIC_URL}/${objectKey}`;
+  // Return relative URL to route through Worker (allows header control)
+  // const publicUrl = `${CONFIG.R2_PUBLIC_URL}/${objectKey}`;
+  const publicUrl = `/api/file/${fileId}`;
 
-  return json({ 
-    id: fileId, 
+  return json({
+    id: fileId,
     url: publicUrl,
     expires_at: expiryTimestamp,
     expires_at_iso: new Date(expiryTimestamp).toISOString()
@@ -129,8 +131,9 @@ async function getFile(req, env) {
   return new Response(file.body, {
     headers: {
       "Content-Type": file.httpMetadata.contentType || "application/octet-stream",
-      "Content-Security-Policy": "default-src 'none'; sandbox;", 
-      "X-Content-Type-Options": "nosniff",
+      // Relaxed CSP to allow HTML rendering
+      // "Content-Security-Policy": "default-src 'none'; sandbox;", 
+      // "X-Content-Type-Options": "nosniff",
       "Access-Control-Allow-Origin": "*",
       // Added Expiry Header
       "X-File-Expires": expires ? new Date(expires).toISOString() : "never"

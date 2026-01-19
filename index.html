@@ -7,6 +7,13 @@
     <title>FILE60 // SYSTEM_TERMINAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <!-- CodeMirror CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -151,6 +158,53 @@
             text-align: center;
             text-transform: uppercase;
         }
+
+        /* CodeMirror Overrides for Brutalist Theme */
+        .CodeMirror {
+            height: 100% !important;
+            flex-grow: 1;
+            background: #121212 !important;
+            color: #00ff41 !important;
+            font-family: 'Courier Prime', monospace !important;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .CodeMirror-gutters {
+            background: #1a1a1a !important;
+            border-right: 1px solid #333 !important;
+        }
+
+        .CodeMirror-linenumber {
+            color: #444 !important;
+        }
+
+        .CodeMirror-cursor {
+            border-left: 2px solid #00ff41 !important;
+        }
+
+        .CodeMirror-selected {
+            background: rgba(0, 255, 65, 0.2) !important;
+        }
+
+        /* Scrollbar in CodeMirror */
+        .CodeMirror-vscrollbar::-webkit-scrollbar,
+        .CodeMirror-hscrollbar::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+            background: #121212;
+            border-left: 1px solid #333;
+        }
+
+        .CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
+        .CodeMirror-hscrollbar::-webkit-scrollbar-thumb {
+            background: #00ff41;
+        }
+
+        .CodeMirror-vscrollbar::-webkit-scrollbar-track,
+        .CodeMirror-hscrollbar::-webkit-scrollbar-track {
+            background: #121212;
+        }
     </style>
 </head>
 
@@ -170,9 +224,10 @@
     <main class="flex flex-col md:flex-row flex-grow overflow-hidden">
         <aside
             class="w-full md:w-[480px] border-b-[4px] md:border-b-0 md:border-r-[4px] border-black bg-[#e5e5e5] p-6 flex flex-col shrink-0">
-            <h1 class="font-black text-[4rem] leading-[0.7] tracking-tighter mb-8 -skew-x-6">FILE<br>60.</h1>
+            <h1 class="font-black text-[4rem] leading-[0.7] tracking-tighter mb-4 -skew-x-6">FILE<br>60.</h1>
 
-            <div class="flex border-[4px] border-black mb-8 shadow-brutal bg-black">
+
+            <div class="flex border-[4px] border-black mb-6 shadow-brutal bg-black shrink-0">
                 <button onclick="setMode('upload')" id="btn-mode-upload"
                     class="flex-1 py-3 font-black text-xs uppercase bg-accent text-black border-r-[4px] border-black transition-all">DUMP
                     TRASH</button>
@@ -181,26 +236,27 @@
                     CODE</button>
             </div>
 
-            <div id="module-upload" class="flex flex-col flex-grow">
+            <div id="module-upload" class="flex flex-col flex-grow min-h-0 overflow-y-auto custom-scroll">
                 <div id="upload-zone" onclick="triggerFileInput()"
                     class="flex-grow min-h-[200px] border-[4px] border-black bg-white hover:bg-accent transition-all cursor-crosshair flex flex-col justify-center items-center p-8 relative group shadow-brutal">
                     <div id="upload-default" class="text-center">
                         <div
                             class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">
-                            CONSUME DATA</div>
-                        <p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">MEMES / LEAKS / EVIDENCE
+                            FEED ME FILES</div>
+                        <p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">TOP SECRET / SPICY MEMES /
+                            EVIDENCE
                         </p>
-                        <p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DRAG IT HERE OR DON'T. I'M A DIV, NOT
-                            A COP.</p>
+                        <p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DROP IT LIKE IT'S HOT (OR NOT, I'M
+                            JUST A DIV)</p>
                     </div>
                     <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(event)">
                 </div>
             </div>
 
-            <div id="module-code" class="hidden flex-col flex-grow">
+            <div id="module-code" class="hidden flex-col flex-grow min-h-0">
                 <div
-                    class="flex-grow border-[4px] border-black bg-terminal shadow-brutal flex flex-col overflow-hidden">
-                    <div class="bg-black border-b-[2px] border-white/10 p-2 flex justify-between items-center">
+                    class="flex-grow border-[4px] border-black bg-terminal shadow-brutal flex flex-col overflow-hidden h-full">
+                    <div class="bg-black border-b-[2px] border-white/10 p-2 flex justify-between items-center shrink-0">
                         <div class="flex gap-1.5 px-2">
                             <div class="w-2.5 h-2.5 rounded-full bg-alert"></div>
                             <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
@@ -214,21 +270,15 @@
                             <option value="txt">raw.txt</option>
                         </select>
                     </div>
-                    <div class="flex flex-grow relative overflow-hidden">
-                        <div class="terminal-gutter w-10 pt-3 text-[10px] font-mono leading-[1.5]">
-                            1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10</div>
-                        <textarea id="code-editor" class="flex-grow p-3 text-sm font-mono overflow-y-auto custom-scroll"
-                            placeholder="// PASTE YOUR CODE HERE..."></textarea>
+                    <div class="flex flex-grow relative overflow-hidden bg-terminal min-h-0">
+                        <!-- CodeMirror Container -->
+                        <div id="code-editor-container" class="w-full h-full text-sm font-mono overflow-hidden"></div>
                     </div>
                     <button id="execute-btn" onclick="uploadCode()"
-                        class="active-press border-t-[4px] border-black bg-accent py-4 font-black text-xs uppercase hover:bg-white transition-colors">
-                        MAKE IT SHAREABLE!
+                        class="active-press border-t-[4px] border-black bg-accent py-4 font-black text-xs uppercase hover:bg-white transition-colors shrink-0">
+                        SHIP IT TO PROD
                     </button>
                 </div>
-            </div>
-
-            <div class="mt-8 p-4 border-[2px] border-black/20 text-[10px] font-bold opacity-60 uppercase italic">
-                Your files vanish like your motivation on Monday morning.
             </div>
         </aside>
 
@@ -236,13 +286,16 @@
             <div id="file-list-container" class="flex-grow overflow-y-auto p-8 custom-scroll">
                 <div id="empty-state" class="hidden h-full flex items-center justify-center">
                     <div class="text-center">
-                        <div class="text-[5rem] font-black opacity-5 -rotate-6 select-none uppercase mb-4">NULL POINTER
-                            EXCEPTION</div>
-                        <div class="text-lg font-bold opacity-30 uppercase">THERE IS NOTHING HERE. JUST LIKE YOUR SOCIAL
-                            LIFE.</div>
+                        <div class="text-[5rem] font-black opacity-5 -rotate-6 select-none uppercase mb-4">404: FILES
+                            NOT FOUND</div>
+                        <div class="text-lg font-bold opacity-30 uppercase">IT'S LONELY OUT HERE IN THE VOID.</div>
                     </div>
                 </div>
                 <div id="file-grid" class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-10"></div>
+            </div>
+            <div
+                class="p-3 m-4 border-[2px] border-black/20 text-[10px] font-bold opacity-60 uppercase italic text-center shrink-0">
+                Your data is safe with us. (Note: We lost the decryption key anyway).
             </div>
         </section>
     </main>
@@ -251,12 +304,12 @@
     <div id="drop-overlay">
         <div class="drop-zone-full">
             <div class="text-center text-white">
-                <div class="font-black text-6xl mb-4 uppercase tracking-wider text-accent">YEET IT!</div>
-                <div class="font-bold text-xl uppercase tracking-wide mb-2">Let go and watch the magic happen</div>
+                <div class="font-black text-6xl mb-4 uppercase tracking-wider text-accent">INCOMING!</div>
+                <div class="font-bold text-xl uppercase tracking-wide mb-2">PREPARE FOR IMPACT</div>
                 <div class="bg-accent text-black px-4 py-2 border-4 border-white font-black text-sm uppercase">
-                    PREPARING LAUNCH SEQUENCE
+                    INITIATING TRANSFER PROTOCOL
                 </div>
-                <div class="mt-4 text-sm opacity-80 uppercase font-bold">(Don't worry, we've got this)</div>
+                <div class="mt-4 text-sm opacity-80 uppercase font-bold">(Please don't be a virus)</div>
             </div>
         </div>
     </div>
@@ -292,6 +345,26 @@
             }
             render();
             setInterval(updateTimers, 1000);
+
+            // Initialize CodeMirror
+            initCodeMirror();
+        }
+
+        function initCodeMirror() {
+            const container = document.getElementById('code-editor-container');
+            if (container) {
+                window.editor = CodeMirror(container, {
+                    value: "// PASTE YOUR CODE HERE...\n// BUGS GO ELSEWHERE.",
+                    mode: "javascript",
+                    theme: "default", // We override this with CSS
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    autofocus: false
+                });
+
+                // Handle resize/refresh issues when tab is hidden
+                window.editor.setSize("100%", "100%");
+            }
         }
 
         function showStatus(msg, type = "error") {
@@ -311,8 +384,8 @@
                 if (uploadDefault && !document.getElementById('upload-progress-bar')) {
                     const currentHTML = uploadDefault.innerHTML;
                     const newHTML = currentHTML.replace(
-                        '<p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DRAG IT HERE OR DON\'T. I\'M A DIV, NOT A COP.</p>',
-                        `<p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DRAG IT HERE OR DON'T. I'M A DIV, NOT A COP.</p>
+                        '<p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DROP IT LIKE IT\'S HOT (OR NOT, I\'M JUST A DIV)</p>',
+                        `<p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DROP IT LIKE IT'S HOT (OR NOT, I'M JUST A DIV)</p>
                         <p class="mt-1 text-[8px] opacity-40 font-bold uppercase">Max size: ${serverConfig.maxFileSizeMB}MB</p>`
                     );
                     uploadDefault.innerHTML = newHTML;
@@ -401,76 +474,84 @@
             isUploading = true;
             toggleLoading(true, file.name, file.size);
 
-            try {
-                const xhr = new XMLHttpRequest();
+            return new Promise((resolve, reject) => {
+                try {
+                    const xhr = new XMLHttpRequest();
 
-                // Set up progress tracking
-                xhr.upload.addEventListener('progress', function (e) {
-                    if (e.lengthComputable) {
-                        const percentComplete = (e.loaded / e.total) * 100;
-                        updateProgress(percentComplete, e.loaded, e.total);
-                    }
-                });
-
-                xhr.onload = function () {
-                    try {
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            const resData = JSON.parse(xhr.responseText);
-                            const downloadUrl = resData.url.startsWith('http') ? resData.url : `${WORKER_BASE_URL}${resData.url}`;
-
-                            let expiryMs = "never";
-                            if (resData.expires_at) {
-                                expiryMs = resData.expires_at;
-                            }
-
-                            files.unshift({
-                                id: resData.id,
-                                name: file.name,
-                                url: downloadUrl,
-                                type: file.type || 'text/plain',
-                                expires: expiryMs,
-                                created: Date.now()
-                            });
-
-                            saveFiles();
-                            render();
-                            showStatus("FILE UPLOADED. NSA NOTIFIED.", "success");
-                        } else {
-                            const resData = JSON.parse(xhr.responseText);
-                            showStatus(`Oops! Upload failed harder than my last relationship. ${resData.error || "Maybe try again?"}`);
+                    // Set up progress tracking
+                    xhr.upload.addEventListener('progress', function (e) {
+                        if (e.lengthComputable) {
+                            const percentComplete = (e.loaded / e.total) * 100;
+                            updateProgress(percentComplete, e.loaded, e.total);
                         }
-                    } catch (e) {
-                        showStatus("Something went wrong in the digital void. Try again?");
-                    } finally {
+                    });
+
+                    xhr.onload = function () {
+                        try {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                const resData = JSON.parse(xhr.responseText);
+                                const downloadUrl = resData.url.startsWith('http') ? resData.url : `${WORKER_BASE_URL}${resData.url}`;
+
+                                let expiryMs = "never";
+                                if (resData.expires_at) {
+                                    expiryMs = resData.expires_at;
+                                }
+
+                                files.unshift({
+                                    id: resData.id,
+                                    name: file.name,
+                                    url: downloadUrl,
+                                    type: file.type || 'text/plain',
+                                    expires: expiryMs,
+                                    created: Date.now()
+                                });
+
+                                saveFiles();
+                                render();
+                                showStatus("FILE UPLOADED. NSA NOTIFIED.", "success");
+                                resolve(resData);
+                            } else {
+                                const resData = JSON.parse(xhr.responseText);
+                                showStatus(`Oops! Upload failed harder than my last relationship. ${resData.error || "Maybe try again?"}`);
+                                reject(new Error(resData.error));
+                            }
+                        } catch (e) {
+                            showStatus("Something went wrong in the digital void. Try again?");
+                            reject(e);
+                        } finally {
+                            isUploading = false;
+                            toggleLoading(false);
+                        }
+                    };
+
+                    xhr.onerror = function () {
+                        showStatus("Upload crashed and burned! Check your internet connection.");
                         isUploading = false;
                         toggleLoading(false);
-                    }
-                };
+                        reject(new Error("Network error"));
+                    };
 
-                xhr.onerror = function () {
-                    showStatus("Upload crashed and burned! Check your internet connection.");
+                    xhr.ontimeout = function () {
+                        showStatus("Upload took too long and gave up. Even I have limits!");
+                        isUploading = false;
+                        toggleLoading(false);
+                        reject(new Error("Timeout"));
+                    };
+
+                    xhr.open('POST', `${WORKER_BASE_URL}/api/create-file`);
+                    xhr.setRequestHeader('x-session-token', sessionToken);
+                    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+                    xhr.timeout = 60000; // 60 second timeout
+
+                    xhr.send(file);
+
+                } catch (err) {
                     isUploading = false;
                     toggleLoading(false);
-                };
-
-                xhr.ontimeout = function () {
-                    showStatus("Upload took too long and gave up. Even I have limits!");
-                    isUploading = false;
-                    toggleLoading(false);
-                };
-
-                xhr.open('POST', `${WORKER_BASE_URL}/api/create-file`);
-                xhr.setRequestHeader('x-session-token', sessionToken);
-                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-                xhr.timeout = 60000; // 60 second timeout
-
-                xhr.send(file);
-
-            } catch (err) {
-                isUploading = false;
-                toggleLoading(false);
-                showStatus("Couldn't read the file. Please try again.");
-            }
+                    showStatus("Couldn't read the file. Please try again.");
+                    reject(err);
+                }
+            });
         }
         function render() {
             const grid = document.getElementById('file-grid');
@@ -554,7 +635,7 @@
                 const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
                 zone.innerHTML = `
                     <div class="font-black text-2xl uppercase border-[4px] border-black bg-accent px-6 py-3">
-                        WASTING BANDWIDTH...
+                        STEALING YOUR WIFI...
                     </div>
                     <p class="mt-4 text-[10px] font-bold opacity-80 break-all">${fileName}</p>
                     <p class="text-[8px] font-bold opacity-60">${fileSizeMB}MB of pure digital goodness</p>
@@ -563,14 +644,14 @@
                     </div>
                     <div class="upload-info">
                         <div id="upload-progress-text" class="font-black">0%</div>
-                        <div id="upload-progress-info" class="text-[8px] opacity-60 mt-1">Bitcoin miner running in background...</div>
+                        <div id="upload-progress-info" class="text-[8px] opacity-60 mt-1">DEFINITELY NOT MINING DOGECOIN...</div>
                     </div>
                 `;
                 execBtn.innerText = "UPLOADING AWESOMENESS...";
                 execBtn.disabled = true;
             } else {
-                zone.innerHTML = `<div class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">CONSUME DATA</div><p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">MEMES / LEAKS / EVIDENCE</p><p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DRAG IT HERE OR DON'T. I'M A DIV, NOT A COP.</p>${serverConfig ? `<p class="mt-1 text-[8px] opacity-40 font-bold uppercase">Max size: ${serverConfig.maxFileSizeMB}MB (I'm not that hungry)</p>` : ''}`;
-                execBtn.innerText = "MAKE IT SHAREABLE!";
+                zone.innerHTML = `<div class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">FEED ME FILES</div><p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">TOP SECRET / SPICY MEMES / EVIDENCE</p><p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DROP IT LIKE IT'S HOT (OR NOT, I'M JUST A DIV)</p>${serverConfig ? `<p class="mt-1 text-[8px] opacity-40 font-bold uppercase">Max size: ${serverConfig.maxFileSizeMB}MB (I'm not that hungry)</p>` : ''}`;
+                execBtn.innerText = "SHIP IT TO PROD";
                 execBtn.disabled = false;
             }
         }
@@ -593,10 +674,15 @@
             }, 1000);
         }
         async function uploadCode() {
-            const codeEditor = document.getElementById('code-editor');
             const codeExt = document.getElementById('code-ext');
 
-            const code = codeEditor.value.trim();
+            let code = "";
+            if (window.editor) {
+                code = window.editor.getValue().trim();
+            } else {
+                // Fallback in case editor didn't load for some reason
+                code = document.getElementById('code-editor-container').innerText.trim();
+            }
             if (!code) {
                 showStatus("Come on, give me some code to work with! The editor's feeling lonely");
                 return;
@@ -605,8 +691,15 @@
             const extension = codeExt.value;
             const fileName = codeExt.options[codeExt.selectedIndex].text;
 
+            let mimeType = 'text/plain';
+            switch (extension) {
+                case 'html': mimeType = 'text/html'; break;
+                case 'js': mimeType = 'text/javascript'; break;
+                case 'css': mimeType = 'text/css'; break;
+            }
+
             // Create a blob from the code
-            const blob = new Blob([code], { type: 'text/plain' });
+            const blob = new Blob([code], { type: mimeType });
 
             // Check size before creating file
             if (serverConfig && blob.size > serverConfig.maxFileSize) {
@@ -615,9 +708,18 @@
             }
 
             // Create a file-like object
-            const file = new File([blob], fileName, { type: 'text/plain' });
+            const file = new File([blob], fileName, { type: mimeType });
 
-            await uploadFile(file);
+            try {
+                await uploadFile(file);
+                // Clear editor on success
+                if (window.editor) {
+                    window.editor.setValue("// PASTE YOUR CODE HERE...\n// BUGS GO ELSEWHERE.");
+                }
+            } catch (e) {
+                // Upload failed, don't clear so user can retry
+                console.error("Upload failed", e);
+            }
         }
 
         function setMode(m) {
@@ -636,6 +738,10 @@
             btnCode.classList.toggle('text-black', !isU);
             btnCode.classList.toggle('bg-black', isU);
             btnCode.classList.toggle('text-white', isU);
+
+            if (!isU && window.editor) {
+                setTimeout(() => window.editor.refresh(), 50);
+            }
         }
         window.addEventListener('DOMContentLoaded', init);
     </script>
