@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Marquee from '@/components/Marquee';
 import Uploader from '@/components/Uploader';
 import FileCard from '@/components/FileCard';
 import GlobalDragOverlay from '@/components/GlobalDragOverlay';
@@ -160,7 +159,7 @@ const App: React.FC = () => {
 
   return (
     <div 
-      className="flex flex-col h-screen overflow-hidden relative"
+      className="flex flex-col h-[100dvh] overflow-hidden relative"
       onDragEnter={handleDragEnter}
     >
       <GlobalDragOverlay 
@@ -170,9 +169,7 @@ const App: React.FC = () => {
         onDragLeave={handleDragLeave}
       />
 
-      <Marquee />
-
-      <main className="flex-grow grid grid-cols-1 md:grid-cols-[400px_1fr] overflow-hidden md:h-full">
+      <main className="flex-grow grid grid-cols-1 grid-rows-[auto_1fr] md:grid-rows-1 md:grid-cols-[400px_1fr] overflow-hidden">
         <Uploader 
           onUploadStart={uploadFile} 
           isUploading={isUploading} 
