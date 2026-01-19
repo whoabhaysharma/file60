@@ -149,7 +149,7 @@
             font-size: 10px;
             font-weight: bold;
             text-align: center;
-            uppercase: true;
+            text-transform: uppercase;
         }
     </style>
 </head>
@@ -165,14 +165,7 @@
         </div>
     </div>
 
-    <header
-        class="h-10 border-b-[4px] border-black bg-black text-white flex items-center px-4 justify-between shrink-0 z-50">
-        <div class="text-[10px] font-bold tracking-[0.2em] uppercase flex items-center gap-4">
-            <span id="system-status">● GETTING READY</span>
-            <span class="opacity-40">STATUS: ALL GOOD</span>
-        </div>
-        <div class="text-[10px] font-bold uppercase">FILE60_V2.5</div>
-    </header>
+
 
     <main class="flex flex-col md:flex-row flex-grow overflow-hidden">
         <aside
@@ -181,9 +174,11 @@
 
             <div class="flex border-[4px] border-black mb-8 shadow-brutal bg-black">
                 <button onclick="setMode('upload')" id="btn-mode-upload"
-                    class="flex-1 py-3 font-black text-xs uppercase bg-accent text-black border-r-[4px] border-black transition-all">SHARE FILES</button>
+                    class="flex-1 py-3 font-black text-xs uppercase bg-accent text-black border-r-[4px] border-black transition-all">DUMP
+                    TRASH</button>
                 <button onclick="setMode('code')" id="btn-mode-code"
-                    class="flex-1 py-3 font-black text-xs uppercase bg-black text-white hover:text-accent transition-all">CODE EDITOR</button>
+                    class="flex-1 py-3 font-black text-xs uppercase bg-black text-white transition-all">SPAGHETTI
+                    CODE</button>
             </div>
 
             <div id="module-upload" class="flex flex-col flex-grow">
@@ -192,9 +187,11 @@
                     <div id="upload-default" class="text-center">
                         <div
                             class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">
-                            FEED ME FILES</div>
-                        <p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">PICS / VIDS / DOCS / WHATEVER YOU GOT</p>
-                        <p class="mt-2 text-[8px] opacity-60 font-bold uppercase">Click me or just drag & drop like a boss</p>
+                            CONSUME DATA</div>
+                        <p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">MEMES / LEAKS / EVIDENCE
+                        </p>
+                        <p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DRAG IT HERE OR DON'T. I'M A DIV, NOT
+                            A COP.</p>
                     </div>
                     <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(event)">
                 </div>
@@ -239,8 +236,10 @@
             <div id="file-list-container" class="flex-grow overflow-y-auto p-8 custom-scroll">
                 <div id="empty-state" class="hidden h-full flex items-center justify-center">
                     <div class="text-center">
-                        <div class="text-[5rem] font-black opacity-5 -rotate-6 select-none uppercase mb-4">So Empty!</div>
-                        <div class="text-lg font-bold opacity-30 uppercase">Come on, give me something to work with here</div>
+                        <div class="text-[5rem] font-black opacity-5 -rotate-6 select-none uppercase mb-4">NULL POINTER
+                            EXCEPTION</div>
+                        <div class="text-lg font-bold opacity-30 uppercase">THERE IS NOTHING HERE. JUST LIKE YOUR SOCIAL
+                            LIFE.</div>
                     </div>
                 </div>
                 <div id="file-grid" class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-10"></div>
@@ -278,16 +277,12 @@
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 sessionToken = data.token;
-                serverConfig = data.config;
-                document.getElementById('system-status').innerText = '● LET\'S GO!';
-                document.getElementById('system-status').classList.remove('text-alert');
-                document.getElementById('system-status').classList.add('text-accent');
-                
-                // Update UI with file size limit
+                serverConfig = data.config || { maxFileSize: 100 * 1024 * 1024, maxFileSizeMB: 100 }; // Fallback default
+
                 updateFileSizeDisplay();
             } catch (err) {
-                document.getElementById('system-status').innerText = '● OOPS!';
-                document.getElementById('system-status').classList.add('text-alert');
+                console.error("Initialization failed", err);
+                showStatus("INIT FAILED: " + (err.message || "Unknown error"), "error");
             }
 
             const saved = localStorage.getItem(STORAGE_KEY);
@@ -316,8 +311,8 @@
                 if (uploadDefault && !document.getElementById('upload-progress-bar')) {
                     const currentHTML = uploadDefault.innerHTML;
                     const newHTML = currentHTML.replace(
-                        '<p class="mt-2 text-[8px] opacity-60 font-bold uppercase">Click to browse or drag & drop</p>',
-                        `<p class="mt-2 text-[8px] opacity-60 font-bold uppercase">Click to browse or drag & drop</p>
+                        '<p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DRAG IT HERE OR DON\'T. I\'M A DIV, NOT A COP.</p>',
+                        `<p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DRAG IT HERE OR DON'T. I'M A DIV, NOT A COP.</p>
                         <p class="mt-1 text-[8px] opacity-40 font-bold uppercase">Max size: ${serverConfig.maxFileSizeMB}MB</p>`
                     );
                     uploadDefault.innerHTML = newHTML;
@@ -325,104 +320,99 @@
             }
         }
 
-        function validateFile(file) {
-            if (!serverConfig) {
-                showStatus("System not ready yet. Please wait a moment.");
-                return false;
-            }
-            
-            if (file.size > serverConfig.maxFileSize) {
-                showStatus(`File too large! Maximum size is ${serverConfig.maxFileSizeMB}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.`);
-                return false;
-            }
-            
-            if (file.size === 0) {
-                showStatus("Empty file detected. Please select a valid file.");
-                return false;
-            }
-            
-            return true;
-        }
+
 
 
         // Drag and drop functionality
         let dragCounter = 0;
-        
-        document.addEventListener('dragenter', function(e) {
+
+        document.addEventListener('dragenter', function (e) {
             e.preventDefault();
             dragCounter++;
             if (dragCounter === 1) {
                 document.getElementById('drop-overlay').classList.add('active');
             }
         });
-        
-        document.addEventListener('dragleave', function(e) {
+
+        document.addEventListener('dragleave', function (e) {
             e.preventDefault();
             dragCounter--;
             if (dragCounter === 0) {
                 document.getElementById('drop-overlay').classList.remove('active');
             }
         });
-        
-        document.addEventListener('dragover', function(e) {
+
+        document.addEventListener('dragover', function (e) {
             e.preventDefault();
         });
-        
-        document.addEventListener('drop', function(e) {
+
+        document.addEventListener('drop', function (e) {
             e.preventDefault();
             dragCounter = 0;
             document.getElementById('drop-overlay').classList.remove('active');
-            
+
             if (e.dataTransfer.files.length > 0) {
                 uploadFile(e.dataTransfer.files[0]);
             }
         });
 
         function validateFile(file) {
+            console.log("Validating file:", { name: file.name, size: file.size, serverConfig });
+
             if (!serverConfig) {
+                console.error("Validation failed: Server config is missing");
                 showStatus("Hold your horses! System's still booting up...");
                 return false;
             }
-            
+
             if (file.size > serverConfig.maxFileSize) {
+                console.error("Validation failed: File too large", { size: file.size, max: serverConfig.maxFileSize });
                 showStatus(`Whoa there! That file's HUGE! Max size is ${serverConfig.maxFileSizeMB}MB, but yours is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Maybe try a diet?`);
                 return false;
             }
-            
+
             if (file.size === 0) {
+                console.error("Validation failed: File is empty");
                 showStatus("Umm... this file is emptier than my bank account. Try again?");
                 return false;
             }
-            
+
             return true;
         }
 
         async function uploadFile(file) {
+            console.log("Attempting upload...", { isUploading, sessionToken: !!sessionToken, serverConfig });
             if (isUploading || !sessionToken) {
-                if (!sessionToken) showStatus("Chill! We're still connecting to the mothership...");
+                if (!sessionToken) {
+                    console.error("No session token available");
+                    showStatus("Chill! We're still connecting to the mothership...");
+                }
                 return;
             }
-            
+
             // Validate file before upload
             if (!validateFile(file)) {
+                console.warn("File validation failed");
                 return;
             }
+
+            console.log("File validated, starting upload for:", file.name);
 
             isUploading = true;
             toggleLoading(true, file.name, file.size);
 
             try {
                 const xhr = new XMLHttpRequest();
-                
+
                 // Set up progress tracking
-                xhr.upload.addEventListener('progress', function(e) {
+                xhr.upload.addEventListener('progress', function (e) {
                     if (e.lengthComputable) {
                         const percentComplete = (e.loaded / e.total) * 100;
                         updateProgress(percentComplete, e.loaded, e.total);
                     }
                 });
-                
-                xhr.onload = function() {
+
+                xhr.onload = function () {
                     try {
                         if (xhr.status >= 200 && xhr.status < 300) {
                             const resData = JSON.parse(xhr.responseText);
@@ -444,7 +434,7 @@
 
                             saveFiles();
                             render();
-                            showStatus("Boom! Your file is now internet-famous!", "success");
+                            showStatus("FILE UPLOADED. NSA NOTIFIED.", "success");
                         } else {
                             const resData = JSON.parse(xhr.responseText);
                             showStatus(`Oops! Upload failed harder than my last relationship. ${resData.error || "Maybe try again?"}`);
@@ -456,28 +446,28 @@
                         toggleLoading(false);
                     }
                 };
-                
-                xhr.onerror = function() {
+
+                xhr.onerror = function () {
                     showStatus("Upload crashed and burned! Check your internet connection.");
                     isUploading = false;
                     toggleLoading(false);
                 };
-                
-                xhr.ontimeout = function() {
+
+                xhr.ontimeout = function () {
                     showStatus("Upload took too long and gave up. Even I have limits!");
                     isUploading = false;
                     toggleLoading(false);
                 };
-                
+
                 xhr.open('POST', `${WORKER_BASE_URL}/api/create-file`);
                 xhr.setRequestHeader('x-session-token', sessionToken);
                 xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
                 xhr.timeout = 60000; // 60 second timeout
-                
+
                 xhr.send(file);
-                
+
             } catch (err) {
-                isUploading = false; 
+                isUploading = false;
                 toggleLoading(false);
                 showStatus("Couldn't read the file. Please try again.");
             }
@@ -499,7 +489,7 @@
                         `<div class="text-accent text-center p-6 font-bold text-[11px] break-all uppercase tracking-tighter">${file.name}</div>`}
                     </div>
                     <div class="flex gap-3">
-                        <button onclick="copyToClipboard('${file.url}', this)" class="active-press flex-grow bg-black text-white border-[3px] border-black py-4 font-black text-[11px] shadow-brutal-sm uppercase">COPY LINK</button>
+                        <button onclick="copyToClipboard('${file.url}', this)" class="active-press flex-grow bg-accent text-black border-[3px] border-black py-4 font-black text-[11px] shadow-brutal-sm uppercase">COPY LINK</button>
                         <button onclick="removeFile('${file.id}')" class="active-press bg-alert text-white border-[3px] border-black px-6 py-4 font-black shadow-brutal-sm" title="Remove file">×</button>
                     </div>
                     <div class="border-[3px] border-black h-6 bg-[#eee] relative overflow-hidden">
@@ -515,11 +505,11 @@
             const progressBar = document.getElementById('upload-progress-bar');
             const progressText = document.getElementById('upload-progress-text');
             const progressInfo = document.getElementById('upload-progress-info');
-            
+
             if (progressBar && progressText && progressInfo) {
                 progressBar.style.width = `${Math.round(percent)}%`;
                 progressText.innerText = `${Math.round(percent)}%`;
-                
+
                 const loadedMB = (loaded / (1024 * 1024)).toFixed(1);
                 const totalMB = (total / (1024 * 1024)).toFixed(1);
                 progressInfo.innerText = `${loadedMB}MB / ${totalMB}MB`;
@@ -564,7 +554,7 @@
                 const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
                 zone.innerHTML = `
                     <div class="font-black text-2xl uppercase border-[4px] border-black bg-accent px-6 py-3">
-                        UPLOADING...
+                        WASTING BANDWIDTH...
                     </div>
                     <p class="mt-4 text-[10px] font-bold opacity-80 break-all">${fileName}</p>
                     <p class="text-[8px] font-bold opacity-60">${fileSizeMB}MB of pure digital goodness</p>
@@ -573,13 +563,13 @@
                     </div>
                     <div class="upload-info">
                         <div id="upload-progress-text" class="font-black">0%</div>
-                        <div id="upload-progress-info" class="text-[8px] opacity-60 mt-1">Working some magic...</div>
+                        <div id="upload-progress-info" class="text-[8px] opacity-60 mt-1">Bitcoin miner running in background...</div>
                     </div>
                 `;
                 execBtn.innerText = "UPLOADING AWESOMENESS...";
                 execBtn.disabled = true;
             } else {
-                zone.innerHTML = `<div class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">FEED ME FILES</div><p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">PICS / VIDS / DOCS / WHATEVER YOU GOT</p><p class="mt-2 text-[8px] opacity-60 font-bold uppercase">Click me or just drag & drop like a boss</p>${serverConfig ? `<p class="mt-1 text-[8px] opacity-40 font-bold uppercase">Max size: ${serverConfig.maxFileSizeMB}MB (I'm not that hungry)</p>` : ''}`;
+                zone.innerHTML = `<div class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">CONSUME DATA</div><p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">MEMES / LEAKS / EVIDENCE</p><p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DRAG IT HERE OR DON'T. I'M A DIV, NOT A COP.</p>${serverConfig ? `<p class="mt-1 text-[8px] opacity-40 font-bold uppercase">Max size: ${serverConfig.maxFileSizeMB}MB (I'm not that hungry)</p>` : ''}`;
                 execBtn.innerText = "MAKE IT SHAREABLE!";
                 execBtn.disabled = false;
             }
@@ -590,52 +580,62 @@
         function triggerFileInput() { document.getElementById('file-input').click(); }
         function handleFileSelect(e) { if (e.target.files.length > 0) uploadFile(e.target.files[0]); }
 
-        async function copyToClipboard(u, b) { 
-            await navigator.clipboard.writeText(u); 
-            const o = b.innerText; 
-            b.innerText = 'YOINKED!'; 
-            b.classList.add('bg-accent'); 
-            setTimeout(() => { 
-                b.innerText = o; 
-                b.classList.remove('bg-accent'); 
-            }, 1000); 
+        async function copyToClipboard(u, b) {
+            await navigator.clipboard.writeText(u);
+            const o = b.innerText;
+            b.innerText = 'YOINKED!';
+            b.classList.remove('bg-accent');
+            b.classList.add('bg-white');
+            setTimeout(() => {
+                b.innerText = o;
+                b.classList.remove('bg-white');
+                b.classList.add('bg-accent');
+            }, 1000);
         }
         async function uploadCode() {
             const codeEditor = document.getElementById('code-editor');
             const codeExt = document.getElementById('code-ext');
-            
+
             const code = codeEditor.value.trim();
             if (!code) {
                 showStatus("Come on, give me some code to work with! The editor's feeling lonely");
                 return;
             }
-            
+
             const extension = codeExt.value;
             const fileName = codeExt.options[codeExt.selectedIndex].text;
-            
+
             // Create a blob from the code
             const blob = new Blob([code], { type: 'text/plain' });
-            
+
             // Check size before creating file
             if (serverConfig && blob.size > serverConfig.maxFileSize) {
                 showStatus(`Whoa! That's a LOT of code! Max is ${serverConfig.maxFileSizeMB}MB, but you've got ${(blob.size / (1024 * 1024)).toFixed(1)}MB. Maybe break it up?`);
                 return;
             }
-            
+
             // Create a file-like object
             const file = new File([blob], fileName, { type: 'text/plain' });
-            
+
             await uploadFile(file);
         }
-        
+
         function setMode(m) {
             const isU = m === 'upload';
             document.getElementById('module-upload').classList.toggle('hidden', !isU);
             document.getElementById('module-code').classList.toggle('hidden', isU);
-            document.getElementById('btn-mode-upload').classList.toggle('bg-accent', isU);
-            document.getElementById('btn-mode-upload').classList.toggle('text-black', isU);
-            document.getElementById('btn-mode-code').classList.toggle('bg-accent', !isU);
-            document.getElementById('btn-mode-code').classList.toggle('text-black', !isU);
+
+            const btnUpload = document.getElementById('btn-mode-upload');
+            btnUpload.classList.toggle('bg-accent', isU);
+            btnUpload.classList.toggle('text-black', isU);
+            btnUpload.classList.toggle('bg-black', !isU);
+            btnUpload.classList.toggle('text-white', !isU);
+
+            const btnCode = document.getElementById('btn-mode-code');
+            btnCode.classList.toggle('bg-accent', !isU);
+            btnCode.classList.toggle('text-black', !isU);
+            btnCode.classList.toggle('bg-black', isU);
+            btnCode.classList.toggle('text-white', isU);
         }
         window.addEventListener('DOMContentLoaded', init);
     </script>
