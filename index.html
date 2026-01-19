@@ -205,6 +205,16 @@
         .CodeMirror-hscrollbar::-webkit-scrollbar-track {
             background: #121212;
         }
+
+        /* Diagonal Lines Pattern */
+        .bg-diagonal-green {
+            background-color: #ffffff;
+            background-image: repeating-linear-gradient(45deg,
+                    rgba(0, 255, 65, 0.15) 0px,
+                    rgba(0, 255, 65, 0.15) 1px,
+                    transparent 1px,
+                    transparent 6px);
+        }
     </style>
 </head>
 
@@ -238,7 +248,7 @@
 
             <div id="module-upload" class="flex flex-col flex-grow min-h-0 overflow-y-auto custom-scroll">
                 <div id="upload-zone" onclick="triggerFileInput()"
-                    class="flex-grow min-h-[200px] border-[4px] border-black bg-white hover:bg-accent transition-all cursor-crosshair flex flex-col justify-center items-center p-8 relative group shadow-brutal">
+                    class="flex-grow min-h-[200px] border-[4px] border-black bg-diagonal-green hover:bg-accent transition-all cursor-crosshair flex flex-col justify-center items-center p-8 relative group shadow-brutal">
                     <div id="upload-default" class="text-center">
                         <div
                             class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">
@@ -563,19 +573,19 @@
                 return `
                 <div class="bg-white border-[4px] border-black shadow-brutal p-5 flex flex-col gap-5">
                     <div class="relative aspect-video bg-black border-[3px] border-black overflow-hidden scanlines flex items-center justify-center">
-                        <div class="absolute top-3 left-3 z-10 bg-accent border-[2px] border-black px-2 py-0.5 text-[10px] font-black uppercase text-black">
+                        <div class="absolute top-3 left-3 z-10 bg-accent border-[2px] border-black px-2 py-0.5 text-xs font-black uppercase text-black">
                             ${file.name.split('.').pop()}
                         </div>
                         ${isImg ? `<img class="w-full h-full object-cover" src="${file.url}" loading="lazy">` :
-                        `<div class="text-accent text-center p-6 font-bold text-[11px] break-all uppercase tracking-tighter">${file.name}</div>`}
+                        `<div class="text-accent text-center p-6 font-bold text-sm break-all uppercase tracking-tighter">${file.name}</div>`}
                     </div>
                     <div class="flex gap-3">
-                        <button onclick="copyToClipboard('${file.url}', this)" class="active-press flex-grow bg-accent text-black border-[3px] border-black py-4 font-black text-[11px] shadow-brutal-sm uppercase">COPY LINK</button>
+                        <button onclick="copyToClipboard('${file.url}', this)" class="active-press flex-grow bg-accent text-black border-[3px] border-black py-4 font-black text-sm shadow-brutal-sm uppercase">COPY LINK</button>
                         <button onclick="removeFile('${file.id}')" class="active-press bg-alert text-white border-[3px] border-black px-6 py-4 font-black shadow-brutal-sm" title="Remove file">×</button>
                     </div>
                     <div class="border-[3px] border-black h-6 bg-[#eee] relative overflow-hidden">
                         <div id="bar-${file.id}" class="h-full bg-black transition-all duration-1000" style="width: 100%"></div>
-                        <div id="time-${file.id}" class="absolute inset-0 flex items-center justify-center text-[10px] font-black mix-blend-difference text-white uppercase">Calculating...</div>
+                        <div id="time-${file.id}" class="absolute inset-0 flex items-center justify-center text-xs font-black mix-blend-difference text-white uppercase">Calculating...</div>
                     </div>
                 </div>`;
             }).join('');
