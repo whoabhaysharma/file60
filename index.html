@@ -1,453 +1,386 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FILE60 // VISUAL TERMINAL</title>
+    <title>FILE60 // SYSTEM_TERMINAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        mono: ['"Courier Prime"', 'monospace'],
-                    },
-                    colors: {
-                        bg: '#e0e0e0',
-                        core: '#ffffff',
-                        ink: '#000000',
-                        accent: '#00ff41',
-                        alert: '#ff2a00',
-                    },
-                    boxShadow: {
-                        'hard': '8px 8px 0px 0px #000',
-                        'hard-hover': '12px 12px 0px 0px #000',
-                        'hard-sm': '4px 4px 0px 0px #000',
-                        'hard-sm-hover': '6px 6px 0px 0px #000',
-                    },
-                    animation: {
-                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    }
+                    fontFamily: { mono: ['"Courier Prime"', 'monospace'] },
+                    colors: { bg: '#d1d1d1', core: '#ffffff', ink: '#000000', accent: '#00ff41', alert: '#ff2a00', terminal: '#121212' },
+                    boxShadow: { 'brutal': '8px 8px 0px 0px #000', 'brutal-sm': '4px 4px 0px 0px #000', 'brutal-lg': '12px 12px 0px 0px #000' }
                 }
             }
         }
     </script>
     <style>
-        body {
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
             font-family: 'Courier Prime', monospace;
-            background-color: #e0e0e0;
-            color: #000;
-            overflow: hidden; /* Prevent body scroll */
+            background-color: #d1d1d1;
         }
 
-        /* Scanline Effect */
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: radial-gradient(circle, #bcbcbc 1px, rgba(0, 0, 0, 0) 1px);
+        }
+
         .scanlines::after {
             content: "";
             position: absolute;
             inset: 0;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0,0,0,0.1),
-                rgba(0,0,0,0.1) 1px,
-                transparent 1px,
-                transparent 3px
-            );
+            background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.07) 0px, rgba(0, 0, 0, 0.07) 1px, transparent 1px, transparent 2px);
             pointer-events: none;
-            z-index: 10;
+            z-index: 5;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
+        .custom-scroll::-webkit-scrollbar {
+            width: 16px;
+            border-left: 4px solid #000;
         }
-        ::-webkit-scrollbar-track {
-            background: #e0e0e0;
-            border-left: 3px solid #000;
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #d1d1d1;
         }
-        ::-webkit-scrollbar-thumb {
+
+        .custom-scroll::-webkit-scrollbar-thumb {
             background: #000;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #00ff41;
+            border: 2px solid #d1d1d1;
         }
 
-        .bg-pattern-stripe {
-            background-image: repeating-linear-gradient(45deg, #ddd 0, #ddd 1px, transparent 0, transparent 10px);
+        .terminal-gutter {
+            background: #1a1a1a;
+            border-right: 1px solid #333;
+            color: #444;
+            text-align: right;
+            padding-right: 8px;
+            user-select: none;
+        }
+
+        .active-press:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0px 0px 0px 0px #000;
+        }
+
+        #code-editor {
+            resize: none;
+            outline: none;
+            background: transparent;
+            color: #00ff41;
+            caret-color: #00ff41;
+            line-height: 1.5;
+        }
+
+        #notification-box {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+            transform: translateY(-150%);
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        #notification-box.visible {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
         }
     </style>
 </head>
-<body class="h-[100dvh] flex flex-col relative" ondragenter="handleGlobalDragEnter(event)">
 
-    <!-- Global Drag Overlay -->
-    <div id="drag-overlay" class="fixed inset-0 z-[9999] flex flex-col justify-center items-center bg-[#00ff41]/90 hidden transition-opacity duration-200"
-         ondragleave="handleGlobalDragLeave(event)" ondragover="event.preventDefault()" ondrop="handleGlobalDrop(event)">
-         <div id="drag-message" class="text-[3rem] md:text-[5rem] font-[900] text-black bg-white p-5 shadow-[10px_10px_0_#000] -rotate-2 text-center uppercase pointer-events-none select-none">
-            DROP IT, MAN!! 🟢
-         </div>
+<body class="flex flex-col h-screen bg-grid" ondragenter="handleGlobalDragEnter(event)">
+
+    <div id="notification-box"
+        class="fixed top-14 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md pointer-events-none">
+        <div id="notification-content"
+            class="bg-alert border-[4px] border-black p-4 shadow-brutal flex items-start gap-4">
+            <div class="bg-black text-white px-2 py-1 text-xs font-black uppercase">SYSTEM_MSG</div>
+            <div id="notification-text" class="text-sm font-bold uppercase leading-tight pt-1"></div>
+        </div>
     </div>
 
-    <!-- Main Layout -->
-    <main class="flex-grow grid grid-cols-1 grid-rows-[auto_1fr] md:grid-rows-1 md:grid-cols-[400px_1fr] overflow-hidden h-full">
-
-        <!-- Uploader Section -->
-        <div class="bg-white border-b-[3px] md:border-b-0 md:border-r-[3px] border-black flex flex-col p-[20px] md:p-[30px] relative z-10 h-auto md:h-full flex-shrink-0">
-            <!-- Brand -->
-            <div class="font-black text-[3rem] md:text-[4rem] leading-[0.8] tracking-[-3px] mb-[20px] md:mb-[30px] skew-x-[-5deg] select-none">
-                FILE<br/>60.
-            </div>
-
-            <!-- Upload Zone -->
-            <div id="upload-zone" onclick="triggerFileInput()"
-                 class="flex-grow min-h-[200px] border-[3px] border-black bg-[#f0f0f0] bg-pattern-stripe flex flex-col justify-center items-center cursor-pointer relative transition-colors hover:bg-[#00ff41] text-black group overflow-hidden">
-
-                <div id="upload-default" class="flex flex-col items-center">
-                    <div class="font-[900] text-xl md:text-2xl uppercase bg-white p-[10px] border-[3px] border-black shadow-[5px_5px_0_#000] text-center z-10 select-none group-hover:shadow-[7px_7px_0_#000] transition-shadow">
-                        UPLOAD MEDIA
-                    </div>
-                    <div class="mt-[10px] font-bold text-xs bg-black text-white px-2 py-1 z-10">
-                        IMG / VID ONLY
-                    </div>
-                </div>
-
-                <!-- Progress Overlay -->
-                <div id="upload-progress" class="hidden absolute inset-0 bg-white flex-col justify-center items-center p-5 z-20">
-                    <div class="font-[900] text-[1.5rem] animate-pulse">UPLOADING</div>
-                    <div class="w-full h-[30px] border-[3px] border-black mt-2">
-                        <div id="progress-bar" class="h-full bg-black transition-all duration-100 ease-linear" style="width: 0%"></div>
-                    </div>
-                    <div id="progress-text" class="mt-1 font-bold">0%</div>
-                </div>
-
-                <input type="file" id="file-input" class="hidden" accept="image/*,video/*" onchange="handleFileSelect(event)">
-            </div>
-
-            <div class="mt-4 text-xs font-bold text-center opacity-50">
-                FILES AUTO-DELETE IN 60 MINS
-            </div>
+    <header
+        class="h-10 border-b-[4px] border-black bg-black text-white flex items-center px-4 justify-between shrink-0 z-50">
+        <div class="text-[10px] font-bold tracking-[0.2em] uppercase flex items-center gap-4">
+            <span id="system-status">● SYSTEM_OFFLINE</span>
+            <span class="opacity-40">CPU_01: NOMINAL</span>
         </div>
+        <div class="text-[10px] font-bold uppercase">FILE60_V2.5</div>
+    </header>
 
-        <!-- File List Section -->
-        <div class="bg-[#e0e0e0] p-[20px] md:p-[30px] overflow-y-auto flex flex-col gap-5 h-full relative" id="file-list-container">
-            <!-- Files injected here -->
-            <div id="empty-state" class="hidden flex-grow flex justify-center items-center opacity-30 text-[2rem] md:text-[3rem] font-[900] -rotate-[10deg] pointer-events-none select-none h-full">
-                NO MEDIA
+    <main class="flex flex-col md:flex-row flex-grow overflow-hidden">
+        <aside
+            class="w-full md:w-[480px] border-b-[4px] md:border-b-0 md:border-r-[4px] border-black bg-[#e5e5e5] p-6 flex flex-col shrink-0">
+            <h1 class="font-black text-[4rem] leading-[0.7] tracking-tighter mb-8 -skew-x-6">FILE<br>60.</h1>
+
+            <div class="flex border-[4px] border-black mb-8 shadow-brutal bg-black">
+                <button onclick="setMode('upload')" id="btn-mode-upload"
+                    class="flex-1 py-3 font-black text-xs uppercase bg-accent text-black border-r-[4px] border-black transition-all">FILES</button>
+                <button onclick="setMode('code')" id="btn-mode-code"
+                    class="flex-1 py-3 font-black text-xs uppercase bg-black text-white hover:text-accent transition-all">EDITOR</button>
             </div>
 
-            <div id="file-grid" class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5 pb-10">
-                <!-- File Cards -->
+            <div id="module-upload" class="flex flex-col flex-grow">
+                <div id="upload-zone" onclick="triggerFileInput()"
+                    class="flex-grow min-h-[200px] border-[4px] border-black bg-white hover:bg-accent transition-all cursor-crosshair flex flex-col justify-center items-center p-8 relative group shadow-brutal">
+                    <div id="upload-default" class="text-center">
+                        <div
+                            class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">
+                            PUSH_DATA</div>
+                        <p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">IMG / VID / PDF / JS /
+                            HTML / CSS</p>
+                    </div>
+                    <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(event)">
+                </div>
             </div>
-        </div>
+
+            <div id="module-code" class="hidden flex-col flex-grow">
+                <div
+                    class="flex-grow border-[4px] border-black bg-terminal shadow-brutal flex flex-col overflow-hidden">
+                    <div class="bg-black border-b-[2px] border-white/10 p-2 flex justify-between items-center">
+                        <div class="flex gap-1.5 px-2">
+                            <div class="w-2.5 h-2.5 rounded-full bg-alert"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-accent"></div>
+                        </div>
+                        <select id="code-ext"
+                            class="bg-terminal text-accent text-[9px] border-[1px] border-accent/50 px-2 py-0.5 uppercase font-bold outline-none">
+                            <option value="html">index.html</option>
+                            <option value="js">script.js</option>
+                            <option value="css">style.css</option>
+                            <option value="txt">raw.txt</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-grow relative overflow-hidden">
+                        <div class="terminal-gutter w-10 pt-3 text-[10px] font-mono leading-[1.5]">
+                            1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10</div>
+                        <textarea id="code-editor" class="flex-grow p-3 text-sm font-mono overflow-y-auto custom-scroll"
+                            placeholder="// PASTE YOUR CODE HERE..."></textarea>
+                    </div>
+                    <button id="execute-btn" onclick="uploadCode()"
+                        class="active-press border-t-[4px] border-black bg-accent py-4 font-black text-xs uppercase hover:bg-white transition-colors">
+                        EXECUTE: GENERATE_LINK
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-8 p-4 border-[2px] border-black/20 text-[10px] font-bold opacity-60 uppercase italic">
+                Volatile system. Server-controlled retention.
+            </div>
+        </aside>
+
+        <section class="flex-grow flex flex-col overflow-hidden">
+            <div id="file-list-container" class="flex-grow overflow-y-auto p-8 custom-scroll">
+                <div id="empty-state" class="hidden h-full flex items-center justify-center">
+                    <div class="text-[5rem] font-black opacity-5 -rotate-6 select-none uppercase">No_Content</div>
+                </div>
+                <div id="file-grid" class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-10"></div>
+            </div>
+        </section>
     </main>
 
     <script>
-        // --- Constants & State ---
-        const STORAGE_KEY = 'file60_storage_v2';
-        const UPLOAD_API_URL = 'https://tmpfiles.org/api/v1/upload';
-        const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-        const EXPIRATION_TIME = 60 * 60 * 1000; // 60 Minutes
+        const WORKER_BASE_URL = 'https://square-cherry-309b.abhaysharma-as2719.workers.dev';
+        const STORAGE_KEY = 'file60_v3';
 
         let files = [];
         let isUploading = false;
-        let dragCounter = 0;
+        let sessionToken = null;
+        let notificationTimeout;
 
-        // --- Init ---
-        function init() {
+        async function init() {
+            try {
+                const res = await fetch(`${WORKER_BASE_URL}/api/init-session`);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                sessionToken = data.token;
+                document.getElementById('system-status').innerText = '● SYSTEM_READY';
+                document.getElementById('system-status').classList.remove('text-alert');
+                document.getElementById('system-status').classList.add('text-accent');
+            } catch (err) {
+                document.getElementById('system-status').innerText = '● AUTH_ERROR';
+                document.getElementById('system-status').classList.add('text-alert');
+            }
+
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
-                try {
-                    files = JSON.parse(saved);
-                    // Filter out expired on load
-                    const now = Date.now();
-                    files = files.filter(f => now < f.expires);
-                    saveFiles();
-                } catch (e) {
-                    console.error("Storage parse error", e);
-                }
+                files = JSON.parse(saved).filter(f => f.expires === "never" || Date.now() < f.expires);
+                saveFiles();
             }
             render();
-
-            // Timer for countdowns and expiration
-            setInterval(() => {
-                const now = Date.now();
-                const validFiles = files.filter(f => now < f.expires);
-                if (validFiles.length !== files.length) {
-                    files = validFiles;
-                    saveFiles();
-                    render();
-                } else {
-                    updateTimers(now);
-                }
-            }, 1000);
+            setInterval(updateTimers, 1000);
         }
 
-        function saveFiles() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(files));
+        function showStatus(msg, type = "error") {
+            const box = document.getElementById('notification-box');
+            const content = document.getElementById('notification-content');
+            const text = document.getElementById('notification-text');
+            clearTimeout(notificationTimeout);
+            content.className = type === "error" ? "bg-alert border-[4px] border-black p-4 shadow-brutal flex items-start gap-4" : "bg-accent border-[4px] border-black p-4 shadow-brutal flex items-start gap-4";
+            text.innerText = msg;
+            box.classList.add('visible');
+            notificationTimeout = setTimeout(() => box.classList.remove('visible'), 4000);
         }
 
-        // --- Core Logic ---
-        function addFile(name, url, type) {
-            // Convert to download URL for embedding if using tmpfiles.org
-            const dlUrl = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
 
-            const newFile = {
-                id: Date.now().toString(),
-                name,
-                url: dlUrl,
-                type,
-                expires: Date.now() + EXPIRATION_TIME,
-            };
-            files.unshift(newFile); // Add to top
-            saveFiles();
-            render();
-        }
-
-        function removeFile(id) {
-            files = files.filter(f => f.id !== id);
-            saveFiles();
-            render();
-        }
-
-        function uploadFile(file) {
-            if (isUploading) return;
-            if (file.size > MAX_FILE_SIZE) {
-                alert("FILE TOO LARGE (MAX 100MB)");
-                return;
-            }
-            if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-                alert("INVALID FORMAT. ONLY IMAGES OR VIDEOS ALLOWED.");
+        async function uploadFile(file) {
+            if (isUploading || !sessionToken) {
+                if (!sessionToken) showStatus("System Offline.");
                 return;
             }
 
             isUploading = true;
-            updateUploadUI(0, true);
+            toggleLoading(true);
 
-            const fd = new FormData();
-            fd.append('file', file);
-
-            const xhr = new XMLHttpRequest();
-
-            xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable) {
-                    const pct = Math.round((e.loaded / e.total) * 100);
-                    updateUploadUI(pct, true);
-                }
-            };
-
-            xhr.onload = () => {
-                isUploading = false;
-                updateUploadUI(0, false);
-                if (xhr.status === 200) {
+            try {
+                const reader = new FileReader();
+                reader.readAsArrayBuffer(file);
+                reader.onload = async () => {
                     try {
-                        const res = JSON.parse(xhr.responseText);
-                        if (res.status === 'success') {
-                            addFile(file.name, res.data.url, file.type);
+                        const response = await fetch(`${WORKER_BASE_URL}/api/create-file`, {
+                            method: 'POST',
+                            headers: {
+                                'x-session-token': sessionToken,
+                                'Content-Type': file.type || 'application/octet-stream'
+                            },
+                            body: reader.result
+                        });
+
+                        const resData = await response.json();
+
+                        if (response.ok) {
+                            const downloadUrl = resData.url.startsWith('http') ? resData.url : `${WORKER_BASE_URL}${resData.url}`;
+
+                            // FIX: Read expiry from the JSON body (resData) instead of headers
+                            let expiryMs = "never";
+                            if (resData.expires_at) {
+                                expiryMs = resData.expires_at; // Using the timestamp directly
+                            }
+
+                            files.unshift({
+                                id: resData.id,
+                                name: file.name,
+                                url: downloadUrl,
+                                type: file.type || 'text/plain',
+                                expires: expiryMs,
+                                created: Date.now()
+                            });
+
+                            saveFiles();
+                            render();
+                            showStatus("Sync Complete.", "success");
                         } else {
-                            alert('Upload API returned error');
+                            showStatus(`ACCESS_DENIED: ${resData.error || "Rate limited."}`);
                         }
                     } catch (e) {
-                        console.error(e);
-                        alert('Upload failed: Invalid response');
+                        showStatus("Sync interrupted.");
+                    } finally {
+                        isUploading = false;
+                        toggleLoading(false);
                     }
-                } else {
-                    alert('Upload failed: ' + xhr.statusText);
-                }
-            };
-
-            xhr.onerror = () => {
-                isUploading = false;
-                updateUploadUI(0, false);
-                alert('Upload failed: Network error');
-            };
-
-            xhr.open('POST', UPLOAD_API_URL);
-            xhr.send(fd);
-        }
-
-        // --- DOM Interaction ---
-        function triggerFileInput() {
-            if(!isUploading) document.getElementById('file-input').click();
-        }
-
-        function handleFileSelect(e) {
-            if (e.target.files && e.target.files.length > 0) {
-                uploadFile(e.target.files[0]);
-                e.target.value = ''; // Reset
+                };
+            } catch (err) {
+                isUploading = false; toggleLoading(false);
+                showStatus("Local Read Error.");
             }
         }
-
-        function updateUploadUI(progress, active) {
-            const defaultUI = document.getElementById('upload-default');
-            const progressUI = document.getElementById('upload-progress');
-            const progressBar = document.getElementById('progress-bar');
-            const progressText = document.getElementById('progress-text');
-
-            if (active) {
-                defaultUI.classList.add('hidden');
-                progressUI.classList.remove('hidden');
-                progressUI.style.display = 'flex'; // Ensure flex
-                progressBar.style.width = `${progress}%`;
-                progressText.innerText = `${progress}%`;
-            } else {
-                defaultUI.classList.remove('hidden');
-                progressUI.classList.add('hidden');
-                progressUI.style.display = 'none';
-            }
-        }
-
-        // --- Drag & Drop ---
-        function handleGlobalDragEnter(e) {
-            e.preventDefault();
-            dragCounter++;
-            const overlay = document.getElementById('drag-overlay');
-            const msg = document.getElementById('drag-message');
-
-            // Check file type
-            let hasInvalid = false;
-            if (e.dataTransfer.items) {
-                for (let i = 0; i < e.dataTransfer.items.length; i++) {
-                    const item = e.dataTransfer.items[i];
-                    if (item.kind === 'file' && (!item.type.startsWith('image/') && !item.type.startsWith('video/'))) {
-                        hasInvalid = true;
-                    }
-                }
-            }
-
-            if (hasInvalid) {
-                overlay.classList.remove('bg-[#00ff41]/90');
-                overlay.classList.add('bg-[#ff2a00]/90');
-                msg.innerText = 'BROO!! PICS/VIDS ONLY 🛑';
-            } else {
-                overlay.classList.remove('bg-[#ff2a00]/90');
-                overlay.classList.add('bg-[#00ff41]/90');
-                msg.innerText = 'DROP IT, MAN!! 🟢';
-            }
-
-            overlay.classList.remove('hidden');
-        }
-
-        function handleGlobalDragLeave(e) {
-            e.preventDefault();
-            dragCounter--;
-            if (dragCounter === 0) {
-                document.getElementById('drag-overlay').classList.add('hidden');
-            }
-        }
-
-        function handleGlobalDrop(e) {
-            e.preventDefault();
-            dragCounter = 0;
-            document.getElementById('drag-overlay').classList.add('hidden');
-
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                uploadFile(e.dataTransfer.files[0]);
-            }
-        }
-
-        // --- Rendering ---
         function render() {
             const grid = document.getElementById('file-grid');
             const empty = document.getElementById('empty-state');
-
-            if (files.length === 0) {
-                empty.classList.remove('hidden');
-                grid.innerHTML = '';
-                return;
-            }
-
+            if (files.length === 0) { empty.classList.remove('hidden'); grid.innerHTML = ''; return; }
             empty.classList.add('hidden');
-
-            // Re-build grid (simple approach, for better performance could use diffing but for this list size innerHTML is fine)
-            grid.innerHTML = files.map(file => createFileCardHTML(file)).join('');
-
-            updateTimers(Date.now());
-        }
-
-        function createFileCardHTML(file) {
-            const isVideo = file.type.startsWith('video');
-            return `
-            <div class="bg-white border-[3px] border-black shadow-hard hover:shadow-hard-hover transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] p-4 flex flex-col gap-4 group/card">
-                <!-- Media Preview -->
-                <div class="w-full h-[200px] bg-black border-[3px] border-black relative flex justify-center items-center overflow-hidden scanlines group hover:border-accent">
-                    <div class="absolute top-0 left-0 bg-accent text-black font-[900] text-[0.7rem] px-2 py-1 z-[5] border-b-2 border-r-2 border-black">
-                        [${isVideo ? 'VID' : 'IMG'}]
-                    </div>
-                    ${isVideo ? `
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1] text-accent pointer-events-none transition-transform duration-100 group-hover:scale-110 drop-shadow-[4px_4px_0_#000]">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>
+            grid.innerHTML = files.map(file => {
+                const isImg = file.type.startsWith('image');
+                return `
+                <div class="bg-white border-[4px] border-black shadow-brutal p-5 flex flex-col gap-5">
+                    <div class="relative aspect-video bg-black border-[3px] border-black overflow-hidden scanlines flex items-center justify-center">
+                        <div class="absolute top-3 left-3 z-10 bg-accent border-[2px] border-black px-2 py-0.5 text-[10px] font-black uppercase text-black">
+                            ${file.name.split('.').pop()}
                         </div>
-                        <video class="w-full h-full object-cover opacity-90 group-hover:opacity-100 grayscale-[20%] contrast-[110%] group-hover:filter-none transition-all duration-200 pointer-events-none" src="${file.url}" muted playsinline preload="metadata"></video>
-                    ` : `
-                        <img src="${file.url}" alt="preview" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 grayscale-[20%] contrast-[110%] group-hover:filter-none transition-all duration-200 pointer-events-none"/>
-                    `}
-                </div>
-
-                <!-- Buttons -->
-                <div class="flex gap-2">
-                    <button onclick="copyToClipboard('${file.url}', this)" class="flex-grow border-[2px] border-black font-bold text-lg p-3 shadow-hard-sm hover:shadow-hard-sm-hover active:shadow-none-active active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-2 bg-accent text-black hover:bg-white">
-                        COPY LINK
-                    </button>
-                    <button onclick="removeFile('${file.id}')" class="bg-alert text-white w-[50px] border-[2px] border-black font-bold text-lg shadow-hard-sm hover:bg-black flex items-center justify-center active:shadow-none-active active:translate-x-[2px] active:translate-y-[2px] transition-all">
-                        X
-                    </button>
-                </div>
-
-                <!-- Timer -->
-                <div class="border-[2px] border-black h-[24px] bg-[#ddd] relative overflow-hidden">
-                    <div id="bar-${file.id}" class="h-full transition-all duration-1000 linear bg-black" style="width: 100%"></div>
-                    <div id="time-${file.id}" class="absolute inset-0 flex items-center justify-center text-[0.8rem] font-bold text-white mix-blend-difference pointer-events-none">60:00</div>
-                </div>
-            </div>
-            `;
+                        ${isImg ? `<img class="w-full h-full object-cover" src="${file.url}" loading="lazy">` :
+                        `<div class="text-accent text-center p-6 font-bold text-[11px] break-all uppercase tracking-tighter">${file.name}</div>`}
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="copyToClipboard('${file.url}', this)" class="active-press flex-grow bg-black text-white border-[3px] border-black py-4 font-black text-[11px] shadow-brutal-sm uppercase">COPY_LINK</button>
+                        <button onclick="removeFile('${file.id}')" class="active-press bg-alert text-white border-[3px] border-black px-6 py-4 font-black shadow-brutal-sm">X</button>
+                    </div>
+                    <div class="border-[3px] border-black h-6 bg-[#eee] relative overflow-hidden">
+                        <div id="bar-${file.id}" class="h-full bg-black transition-all duration-1000" style="width: 100%"></div>
+                        <div id="time-${file.id}" class="absolute inset-0 flex items-center justify-center text-[10px] font-black mix-blend-difference text-white uppercase">Calculating...</div>
+                    </div>
+                </div>`;
+            }).join('');
+            updateTimers();
         }
 
-        function updateTimers(now) {
-            files.forEach(file => {
-                const diff = file.expires - now;
-                const totalDuration = 60 * 60 * 1000;
-                const pct = Math.max(0, (diff / totalDuration) * 100);
+        function updateTimers() {
+            const now = Date.now();
+            files.forEach(f => {
+                const bar = document.getElementById(`bar-${f.id}`);
+                const text = document.getElementById(`time-${f.id}`);
+                if (!bar || !text) return;
 
-                const m = Math.floor(Math.max(0, diff) / 60000);
-                const s = Math.floor((Math.max(0, diff) % 60000) / 1000);
-                const timeString = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-
-                const bar = document.getElementById(`bar-${file.id}`);
-                const text = document.getElementById(`time-${file.id}`);
-
-                if (bar && text) {
-                    bar.style.width = `${pct}%`;
-                    text.innerText = timeString;
-                    if (diff < 10 * 60 * 1000) {
-                        bar.classList.remove('bg-black');
-                        bar.classList.add('bg-alert');
-                    } else {
-                         bar.classList.add('bg-black');
-                         bar.classList.remove('bg-alert');
-                    }
+                if (f.expires === "never") {
+                    bar.style.width = "100%";
+                    text.innerText = "PERMANENT_RECORDS";
+                    return;
                 }
+
+                const totalDuration = f.expires - f.created;
+                const remaining = f.expires - now;
+
+                if (remaining <= 0) {
+                    removeFile(f.id);
+                    return;
+                }
+
+                const pct = Math.max(0, (remaining / totalDuration) * 100);
+                const h = Math.floor(remaining / 3600000);
+                const m = Math.floor((remaining % 3600000) / 60000);
+                const s = Math.floor((remaining % 60000) / 1000);
+
+                bar.style.width = `${pct}%`;
+                text.innerText = `EXP_IN: ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
             });
         }
 
-        function copyToClipboard(url, btn) {
-            navigator.clipboard.writeText(url).then(() => {
-                const originalText = btn.innerText;
-                const originalBg = btn.classList.contains('bg-accent'); // Check if it was green
-
-                btn.innerText = 'COPIED!';
-                btn.classList.remove('bg-accent', 'hover:bg-white');
-                btn.classList.add('bg-white', 'text-black');
-
-                setTimeout(() => {
-                    btn.innerText = 'COPY LINK';
-                    btn.classList.remove('bg-white', 'text-black');
-                    btn.classList.add('bg-accent', 'hover:bg-white');
-                }, 1000);
-            });
+        function toggleLoading(busy) {
+            const zone = document.getElementById('upload-default');
+            const execBtn = document.getElementById('execute-btn');
+            if (busy) {
+                zone.innerHTML = `<div class="font-black text-2xl uppercase border-[4px] border-black bg-accent px-6 py-3 animate-pulse">UPLOADING...</div>`;
+                execBtn.innerText = "PROCESS_PENDING...";
+                execBtn.disabled = true;
+            } else {
+                zone.innerHTML = `<div class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">PUSH_DATA</div><p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">IMG / VID / PDF / JS / HTML / CSS</p>`;
+                execBtn.innerText = "EXECUTE: GENERATE_LINK";
+                execBtn.disabled = false;
+            }
         }
 
-        // Start
+        function saveFiles() { localStorage.setItem(STORAGE_KEY, JSON.stringify(files)); }
+        function removeFile(id) { files = files.filter(f => f.id !== id); saveFiles(); render(); }
+        function triggerFileInput() { document.getElementById('file-input').click(); }
+        function handleFileSelect(e) { if (e.target.files.length > 0) uploadFile(e.target.files[0]); }
+        function handleGlobalDragEnter(e) { e.preventDefault(); }
+        async function copyToClipboard(u, b) { await navigator.clipboard.writeText(u); const o = b.innerText; b.innerText = 'COPIED!'; b.classList.add('bg-accent'); setTimeout(() => { b.innerText = o; b.classList.remove('bg-accent'); }, 1000); }
+        function setMode(m) {
+            const isU = m === 'upload';
+            document.getElementById('module-upload').classList.toggle('hidden', !isU);
+            document.getElementById('module-code').classList.toggle('hidden', isU);
+            document.getElementById('btn-mode-upload').classList.toggle('bg-accent', isU);
+            document.getElementById('btn-mode-upload').classList.toggle('text-black', isU);
+            document.getElementById('btn-mode-code').classList.toggle('bg-accent', !isU);
+            document.getElementById('btn-mode-code').classList.toggle('text-black', !isU);
+        }
         window.addEventListener('DOMContentLoaded', init);
-
     </script>
 </body>
+
 </html>
