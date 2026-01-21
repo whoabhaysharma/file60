@@ -1,21 +1,23 @@
 import { handleOptions, error } from './utils.js';
 import { initSession, createFile, getFile } from './handlers.js';
 import { withAuth } from './auth.js';
+import { getConfig } from './config.js';
 
 export default {
     async fetch(req, env, ctx) {
         const url = new URL(req.url);
+        const config = getConfig(env);
 
         if (req.method === "OPTIONS") return handleOptions();
 
         try {
             if (url.pathname === "/api/init-session") {
                 const secret = env.JWT_SECRET;
-                return await initSession(secret);
+                return await initSession(secret, config);
             }
 
             if (url.pathname === "/api/create-file") {
-                return await withAuth(req, env, ctx, createFile);
+                return await withAuth(req, env, ctx, config, createFile);
             }
 
             // NOTE: getFile is now technically redundant if you use the Public URL,

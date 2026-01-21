@@ -1,6 +1,6 @@
-import { CONFIG, b64, b64_raw } from './utils.js';
+import { SignJWT, jwtVerify } from 'jose';
 
-export async function withAuth(req, env, ctx, handler) {
+export async function withAuth(req, env, ctx, config, handler) {
     const token = req.headers.get("x-session-token");
     if (!token) throw { message: "Missing session token", status: 401 };
 
@@ -9,19 +9,20 @@ export async function withAuth(req, env, ctx, handler) {
     if (!payload) throw { message: "Invalid or expired session", status: 403 };
 
     const ip = req.headers.get("CF-Connecting-IP") || "anonymous";
-    await checkRateLimit(ip, ctx);
+    await checkRateLimit(ip, ctx, config);
 
-    return handler(req, env);
+    return handler(req, env, config);
 }
 
-async function checkRateLimit(ip, ctx) {
+async function checkRateLimit(ip, ctx, config) {
     const cache = caches.default;
     const cacheKey = new Request(`https://ratelimit.local/ip/${ip}`);
 
     let cachedRes = await cache.match(cacheKey);
     let count = cachedRes ? parseInt(await cachedRes.text()) : 0;
 
-    if (count >= CONFIG.RATE_LIMIT_HITS) {
+    // Use config value
+    if (count >= config.RATE_LIMIT_HITS) {
         throw { message: "Rate limit reached.", status: 429 };
     }
 
@@ -33,25 +34,20 @@ async function checkRateLimit(ip, ctx) {
 }
 
 export async function createJWT(payload, secret) {
-    const header = b64(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-    const data = b64(JSON.stringify(payload));
-    const signature = await hmac(`${header}.${data}`, secret);
-    return `${header}.${data}.${signature}`;
+    const secretKey = new TextEncoder().encode(secret);
+    return await new SignJWT(payload)
+        .setProtectedHeader({ alg: 'HS256' })
+        .setIssuedAt()
+        .setExpirationTime('24h') // Set expiry explicitly using jose's API
+        .sign(secretKey);
 }
 
 export async function verifyJWT(token, secret) {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const [header, data, sig] = parts;
-    const expectedSig = await hmac(`${header}.${data}`, secret);
-    if (sig !== expectedSig) return null;
-    const payload = JSON.parse(atob(data.replace(/-/g, '+').replace(/_/g, '/')));
-    return payload;
-}
-
-async function hmac(message, secret) {
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
-    return b64_raw(sig);
+    try {
+        const secretKey = new TextEncoder().encode(secret);
+        const { payload } = await jwtVerify(token, secretKey);
+        return payload;
+    } catch (e) {
+        return null;
+    }
 }

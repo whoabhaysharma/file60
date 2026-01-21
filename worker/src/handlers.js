@@ -1,15 +1,15 @@
-import { CONFIG, json, error } from './utils.js';
+import { json, error } from './utils.js';
 import { createJWT } from './auth.js';
 
-export async function initSession(secret) {
+export async function initSession(secret, config) {
     const now = Math.floor(Date.now() / 1000);
     const token = await createJWT({ iat: now, exp: now + 86400 }, secret);
     return json({
         token,
         config: {
-            maxFileSize: CONFIG.MAX_FILE_SIZE,
-            maxFileSizeMB: Math.round(CONFIG.MAX_FILE_SIZE / (1024 * 1024) * 10) / 10,
-            expiryHours: CONFIG.EXPIRY_MS / (60 * 60 * 1000)
+            maxFileSize: config.MAX_FILE_SIZE,
+            maxFileSizeMB: Math.round(config.MAX_FILE_SIZE / (1024 * 1024) * 10) / 10,
+            expiryHours: config.EXPIRY_MS / (60 * 60 * 1000)
         }
     });
 }
@@ -17,7 +17,7 @@ export async function initSession(secret) {
 import { getDownloadUrl } from './utils.js';
 import { generatePresignedUrl } from './aws.js';
 
-export async function createFile(req, env) {
+export async function createFile(req, env, config) {
     console.log("ENV KEYS:", Object.keys(env)); // DEBUG: Check what vars are loaded
     if (req.method !== "POST") throw { message: "Method not allowed", status: 405 };
 
@@ -27,7 +27,7 @@ export async function createFile(req, env) {
     const contentLength = Number(req.headers.get("Content-Length"));
     // Note: With presigned URLs, we enforce size via Signed URL headers or rely on bucket policies, 
     // but checking intent here is good UI UX.
-    if (contentLength > CONFIG.MAX_FILE_SIZE) throw { message: "File too large", status: 413 };
+    if (contentLength > config.MAX_FILE_SIZE) throw { message: "File too large", status: 413 };
 
     const contentType = req.headers.get("Content-Type") || "application/octet-stream";
 
@@ -90,7 +90,7 @@ export async function createFile(req, env) {
 
     // Calculate expiry
     const now = Date.now();
-    const expiryTimestamp = now + CONFIG.EXPIRY_MS;
+    const expiryTimestamp = now + config.EXPIRY_MS;
 
     let uploadUrl;
     try {
@@ -106,7 +106,7 @@ export async function createFile(req, env) {
     // 2. Generate Public Download URL
     // For local dev, we still point to worker. For prod, we point to CDN.
     const urlObj = new URL(req.url);
-    const cdnUrl = env.R2_PUBLIC_URL || CONFIG.R2_PUBLIC_URL;
+    const cdnUrl = config.R2_PUBLIC_URL;
     const publicUrl = getDownloadUrl(urlObj, publicId, cdnUrl);
 
     // 3. (Optional) We could pre-insert metadata into KV here if we wanted to track files 
