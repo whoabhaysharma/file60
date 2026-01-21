@@ -10,7 +10,7 @@ export default {
 
         try {
             if (url.pathname === "/api/init-session") {
-                const secret = await env.JWT_SECRET.get();
+                const secret = env.JWT_SECRET;
                 return await initSession(secret);
             }
 

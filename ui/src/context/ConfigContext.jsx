@@ -16,25 +16,30 @@ export function ConfigProvider({ children }) {
     const [serverConfig, setServerConfig] = useState(DEFAULT_CONFIG);
 
     useEffect(() => {
-        // Load config from window.APP_CONFIG
-        const configApiUrl = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || '';
-        setApiUrl(configApiUrl.replace(/\/$/, '')); // Remove trailing slash
+        // Load config from window.APP_CONFIG (runtime) or import.meta.env (build time)
+        const runtimeApiUrl = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || '';
+        const envApiUrl = import.meta.env.VITE_API_URL || '';
+
+        // Runtime config takes precedence if set, otherwise use env var
+        const finalApiUrl = (runtimeApiUrl || envApiUrl).replace(/\/$/, '');
+
+        setApiUrl(finalApiUrl);
     }, []);
 
-    const updateServerConfig = (config) => {
+    const updateServerConfig = React.useCallback((config) => {
         if (config) {
             setServerConfig({
                 maxFileSize: config.maxFileSize || DEFAULT_CONFIG.maxFileSize,
                 maxFileSizeMB: config.maxFileSizeMB || DEFAULT_CONFIG.maxFileSizeMB
             });
         }
-    };
+    }, []);
 
-    const value = {
+    const value = React.useMemo(() => ({
         apiUrl,
         serverConfig,
         updateServerConfig
-    };
+    }), [apiUrl, serverConfig, updateServerConfig]);
 
     return (
         <ConfigContext.Provider value={value}>

@@ -33,39 +33,29 @@ export function useApi() {
         }
     }, [apiUrl, setSessionToken, updateServerConfig]);
 
-    const uploadFile = useCallback((file, sessionToken, onProgress) => {
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-
-            xhr.upload.addEventListener('progress', (e) => {
-                if (e.lengthComputable && onProgress) {
-                    const percent = (e.loaded / e.total) * 100;
-                    onProgress(percent, e.loaded, e.total);
-                }
-            });
-
-            xhr.onload = function () {
-                try {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        const resData = JSON.parse(xhr.responseText);
-                        resolve(resData);
-                    } else {
-                        reject(new Error('Upload failed'));
-                    }
-                } catch (e) {
-                    reject(e);
-                }
-            };
-
-            xhr.onerror = () => {
-                reject(new Error('Network error'));
-            };
-
-            xhr.open('POST', `${apiUrl}/api/create-file`);
-            xhr.setRequestHeader('x-session-token', sessionToken);
-            xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-            xhr.send(file);
+    const uploadFile = useCallback(async (file, sessionToken) => {
+        // This is now just a metadata request to get the Presigned URL
+        const response = await fetch(`${apiUrl}/api/create-file`, {
+            method: 'POST',
+            headers: {
+                'x-session-token': sessionToken,
+                'Content-Type': file.type || 'application/octet-stream',
+                'Content-Length': file.size.toString(),
+                'X-File-Name': encodeURIComponent(file.name) // Encode to handle special chars safe in headers
+            }
+            // No body needed for the initial request in this flow, OR we can send empty body.
+            // But standard practice for "starting an upload" is often to just send metadata.
+            // HOWEVER, our current Worker expects a POST.
+            // If I change the worker to NOT expect a body, that's fine.
+            // But the Worker currently doesn't read the body in the new `createFile` handler (it generates URL).
+            // So we can send an empty body or just null.
         });
+
+        if (!response.ok) {
+            throw new Error('Failed to initiate upload');
+        }
+
+        return await response.json();
     }, [apiUrl]);
 
     return {

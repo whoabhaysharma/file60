@@ -6,3 +6,19 @@ npm-debug.log
 .wrangler
 dist
 worker-site
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+
+# Test coverage
+coverage/
+
+# Vite
+dist/
+dist-ssr/
+*.local

@@ -27,31 +27,57 @@ export function useFileUpload(onSuccess, onError) {
         }
 
         setIsUploading(true);
-        setUploadProgress(0);
+        setUploadProgress(1); // Start
 
         try {
-            const resData = await apiUploadFile(file, sessionToken, (percent) => {
-                setUploadProgress(percent);
-            });
+            // Step 1: Get Presigned URL from Backend
+            const resData = await apiUploadFile(file, sessionToken);
 
-            // Construct download URL
-            const downloadUrl = resData.url.startsWith('http')
-                ? resData.url
-                : `${apiUrl}${resData.url}`;
+            if (!resData.upload_url) {
+                throw new Error('Server did not provide an upload URL.');
+            }
+
+            // Step 2: Upload directly to R2 using the Presigned URL
+            await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        setUploadProgress(percent);
+                    }
+                });
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve();
+                    } else {
+                        reject(new Error(`Upload failed with status ${xhr.status}`));
+                    }
+                };
+
+                xhr.onerror = () => reject(new Error('Network error during upload'));
+
+                xhr.open('PUT', resData.upload_url);
+                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+                // Note: If we added custom metadata in generating the signed URL, we MUST match headers here.
+                xhr.send(file);
+            });
 
             // Add file to state
             const fileData = {
                 id: resData.id,
                 name: file.name,
-                url: downloadUrl,
+                url: resData.url,
                 type: file.type || 'text/plain',
-                expires: resData.expires_at || 'never',
-                created: Date.now()
+                expires: resData.expires_at,
+                created: resData.created_at
             };
 
             addFile(fileData);
             onSuccess?.('FILE UPLOADED. NSA NOTIFIED.');
         } catch (error) {
+            console.error(error);
             onError?.(error.message || 'Upload failed.');
         } finally {
             setIsUploading(false);

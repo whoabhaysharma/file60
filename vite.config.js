@@ -9,6 +9,7 @@ export default defineConfig({
         })
     ],
     root: 'ui',
+    envDir: '..',
     publicDir: 'public',
     build: {
         outDir: '../dist',

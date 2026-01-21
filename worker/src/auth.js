@@ -4,7 +4,7 @@ export async function withAuth(req, env, ctx, handler) {
     const token = req.headers.get("x-session-token");
     if (!token) throw { message: "Missing session token", status: 401 };
 
-    const secret = await env.JWT_SECRET.get();
+    const secret = env.JWT_SECRET;
     const payload = await verifyJWT(token, secret);
     if (!payload) throw { message: "Invalid or expired session", status: 403 };
 
