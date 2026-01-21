@@ -5,9 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FILE60 // SYSTEM_TERMINAL</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script src="config.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
-    <!-- CodeMirror CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
@@ -63,27 +64,9 @@
             border: 2px solid #d1d1d1;
         }
 
-        .terminal-gutter {
-            background: #1a1a1a;
-            border-right: 1px solid #333;
-            color: #444;
-            text-align: right;
-            padding-right: 8px;
-            user-select: none;
-        }
-
         .active-press:active {
             transform: translate(3px, 3px);
             box-shadow: 0px 0px 0px 0px #000;
-        }
-
-        #code-editor {
-            resize: none;
-            outline: none;
-            background: transparent;
-            color: #00ff41;
-            caret-color: #00ff41;
-            line-height: 1.5;
         }
 
         #notification-box {
@@ -130,11 +113,6 @@
             position: relative;
         }
 
-        .drop-feedback {
-            transform: scale(1.05);
-            transition: transform 0.2s ease;
-        }
-
         .progress-container {
             position: relative;
             width: 100%;
@@ -159,7 +137,7 @@
             text-transform: uppercase;
         }
 
-        /* CodeMirror Overrides for Brutalist Theme */
+        /* CodeMirror Overrides */
         .CodeMirror {
             height: 100% !important;
             flex-grow: 1;
@@ -187,26 +165,6 @@
             background: rgba(0, 255, 65, 0.2) !important;
         }
 
-        /* Scrollbar in CodeMirror */
-        .CodeMirror-vscrollbar::-webkit-scrollbar,
-        .CodeMirror-hscrollbar::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-            background: #121212;
-            border-left: 1px solid #333;
-        }
-
-        .CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
-        .CodeMirror-hscrollbar::-webkit-scrollbar-thumb {
-            background: #00ff41;
-        }
-
-        .CodeMirror-vscrollbar::-webkit-scrollbar-track,
-        .CodeMirror-hscrollbar::-webkit-scrollbar-track {
-            background: #121212;
-        }
-
-        /* Diagonal Lines Pattern */
         .bg-diagonal-green {
             background-color: #ffffff;
             background-image: repeating-linear-gradient(45deg,
@@ -214,6 +172,43 @@
                     rgba(0, 255, 65, 0.15) 1px,
                     transparent 1px,
                     transparent 6px);
+        }
+
+        /* Resizer Styles */
+        #resizer {
+            width: 12px;
+            cursor: col-resize;
+            background-color: #000;
+            z-index: 50;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        #resizer:hover,
+        #resizer.resizing {
+            background-color: #00ff41;
+        }
+
+        #resizer::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 24px;
+            background: repeating-linear-gradient(to bottom, #00ff41 0, #00ff41 2px, transparent 2px, transparent 4px);
+        }
+
+        #resizer:hover::after,
+        #resizer.resizing::after {
+            background: repeating-linear-gradient(to bottom, #000 0, #000 2px, transparent 2px, transparent 4px);
+        }
+
+        @media (max-width: 768px) {
+            #resizer {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -229,13 +224,10 @@
         </div>
     </div>
 
-
-
     <main class="flex flex-col md:flex-row flex-grow overflow-hidden">
         <aside
-            class="w-full md:w-[480px] border-b-[4px] md:border-b-0 md:border-r-[4px] border-black bg-[#e5e5e5] p-6 flex flex-col shrink-0">
+            class="w-full md:w-[480px] border-b-[4px] md:border-b-0 border-black bg-[#e5e5e5] p-6 flex flex-col shrink-0">
             <h1 class="font-black text-[4rem] leading-[0.7] tracking-tighter mb-4 -skew-x-6">FILE<br>60.</h1>
-
 
             <div class="flex border-[4px] border-black mb-6 shadow-brutal bg-black shrink-0">
                 <button onclick="setMode('upload')" id="btn-mode-upload"
@@ -254,8 +246,7 @@
                             class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">
                             FEED ME FILES</div>
                         <p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">TOP SECRET / SPICY MEMES /
-                            EVIDENCE
-                        </p>
+                            EVIDENCE</p>
                         <p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DROP IT LIKE IT'S HOT (OR NOT, I'M
                             JUST A DIV)</p>
                     </div>
@@ -281,7 +272,6 @@
                         </select>
                     </div>
                     <div class="flex flex-grow relative overflow-hidden bg-terminal min-h-0">
-                        <!-- CodeMirror Container -->
                         <div id="code-editor-container" class="w-full h-full text-sm font-mono overflow-hidden"></div>
                     </div>
                     <button id="execute-btn" onclick="uploadCode()"
@@ -292,6 +282,8 @@
             </div>
         </aside>
 
+        <div id="resizer"></div>
+
         <section class="flex-grow flex flex-col overflow-hidden">
             <div id="file-list-container" class="flex-grow overflow-y-auto p-8 custom-scroll">
                 <div id="empty-state" class="hidden h-full flex items-center justify-center">
@@ -301,7 +293,8 @@
                         <div class="text-lg font-bold opacity-30 uppercase">IT'S LONELY OUT HERE IN THE VOID.</div>
                     </div>
                 </div>
-                <div id="file-grid" class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-10"></div>
+                <div id="file-grid" class="grid gap-10"
+                    style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));"></div>
             </div>
             <div
                 class="p-3 m-4 border-[2px] border-black/20 text-[10px] font-bold opacity-60 uppercase italic text-center shrink-0">
@@ -310,22 +303,21 @@
         </section>
     </main>
 
-    <!-- Full-screen drop overlay -->
     <div id="drop-overlay">
         <div class="drop-zone-full">
             <div class="text-center text-white">
                 <div class="font-black text-6xl mb-4 uppercase tracking-wider text-accent">INCOMING!</div>
                 <div class="font-bold text-xl uppercase tracking-wide mb-2">PREPARE FOR IMPACT</div>
                 <div class="bg-accent text-black px-4 py-2 border-4 border-white font-black text-sm uppercase">
-                    INITIATING TRANSFER PROTOCOL
-                </div>
-                <div class="mt-4 text-sm opacity-80 uppercase font-bold">(Please don't be a virus)</div>
+                    INITIATING TRANSFER PROTOCOL</div>
             </div>
         </div>
     </div>
 
     <script>
-        const WORKER_BASE_URL = 'https://square-cherry-309b.abhaysharma-as2719.workers.dev';
+        const CONFIG_API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || "";
+        // Remove trailing slash if present
+        const WORKER_BASE_URL = CONFIG_API_URL.replace(/\/$/, "");
         const STORAGE_KEY = 'file60_v3';
 
         let files = [];
@@ -340,11 +332,9 @@
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 sessionToken = data.token;
-                serverConfig = data.config || { maxFileSize: 100 * 1024 * 1024, maxFileSizeMB: 100 }; // Fallback default
-
+                serverConfig = data.config || { maxFileSize: 100 * 1024 * 1024, maxFileSizeMB: 100 };
                 updateFileSizeDisplay();
             } catch (err) {
-                console.error("Initialization failed", err);
                 showStatus("INIT FAILED: " + (err.message || "Unknown error"), "error");
             }
 
@@ -355,9 +345,47 @@
             }
             render();
             setInterval(updateTimers, 1000);
-
-            // Initialize CodeMirror
             initCodeMirror();
+            initResizer();
+        }
+
+        function initResizer() {
+            const resizer = document.getElementById('resizer');
+            const sidebar = document.querySelector('aside');
+            if (!resizer || !sidebar) return;
+
+            let isResizing = false;
+            let startX, startWidth;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = sidebar.getBoundingClientRect().width;
+                resizer.classList.add('resizing');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                const newWidth = startWidth + (e.clientX - startX);
+                const minWidth = 300;
+                const maxWidth = window.innerWidth * 0.7;
+
+                if (newWidth >= minWidth && newWidth <= maxWidth) {
+                    sidebar.style.width = `${newWidth}px`;
+                    if (window.editor) window.editor.refresh();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    resizer.classList.remove('resizing');
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                }
+            });
         }
 
         function initCodeMirror() {
@@ -366,13 +394,10 @@
                 window.editor = CodeMirror(container, {
                     value: "// PASTE YOUR CODE HERE...\n// BUGS GO ELSEWHERE.",
                     mode: "javascript",
-                    theme: "default", // We override this with CSS
                     lineNumbers: true,
                     lineWrapping: true,
                     autofocus: false
                 });
-
-                // Handle resize/refresh issues when tab is hidden
                 window.editor.setSize("100%", "100%");
             }
         }
@@ -391,178 +416,72 @@
         function updateFileSizeDisplay() {
             if (serverConfig) {
                 const uploadDefault = document.getElementById('upload-default');
-                if (uploadDefault && !document.getElementById('upload-progress-bar')) {
-                    const currentHTML = uploadDefault.innerHTML;
-                    const newHTML = currentHTML.replace(
-                        '<p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DROP IT LIKE IT\'S HOT (OR NOT, I\'M JUST A DIV)</p>',
-                        `<p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DROP IT LIKE IT'S HOT (OR NOT, I'M JUST A DIV)</p>
-                        <p class="mt-1 text-[8px] opacity-40 font-bold uppercase">Max size: ${serverConfig.maxFileSizeMB}MB</p>`
-                    );
-                    uploadDefault.innerHTML = newHTML;
+                if (uploadDefault) {
+                    const infoP = uploadDefault.querySelector('.opacity-40');
+                    if (!infoP) {
+                        uploadDefault.insertAdjacentHTML('beforeend', `<p class="mt-1 text-[8px] opacity-40 font-bold uppercase">Max size: ${serverConfig.maxFileSizeMB}MB</p>`);
+                    }
                 }
             }
         }
 
-
-
-
-        // Drag and drop functionality
+        // Drag and drop
         let dragCounter = 0;
-
-        document.addEventListener('dragenter', function (e) {
-            e.preventDefault();
-            dragCounter++;
-            if (dragCounter === 1) {
-                document.getElementById('drop-overlay').classList.add('active');
-            }
-        });
-
-        document.addEventListener('dragleave', function (e) {
-            e.preventDefault();
-            dragCounter--;
-            if (dragCounter === 0) {
-                document.getElementById('drop-overlay').classList.remove('active');
-            }
-        });
-
-        document.addEventListener('dragover', function (e) {
-            e.preventDefault();
-        });
-
-        document.addEventListener('drop', function (e) {
-            e.preventDefault();
-            dragCounter = 0;
-            document.getElementById('drop-overlay').classList.remove('active');
-
-            if (e.dataTransfer.files.length > 0) {
-                uploadFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        function validateFile(file) {
-            console.log("Validating file:", { name: file.name, size: file.size, serverConfig });
-
-            if (!serverConfig) {
-                console.error("Validation failed: Server config is missing");
-                showStatus("Hold your horses! System's still booting up...");
-                return false;
-            }
-
-            if (file.size > serverConfig.maxFileSize) {
-                console.error("Validation failed: File too large", { size: file.size, max: serverConfig.maxFileSize });
-                showStatus(`Whoa there! That file's HUGE! Max size is ${serverConfig.maxFileSizeMB}MB, but yours is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Maybe try a diet?`);
-                return false;
-            }
-
-            if (file.size === 0) {
-                console.error("Validation failed: File is empty");
-                showStatus("Umm... this file is emptier than my bank account. Try again?");
-                return false;
-            }
-
-            return true;
-        }
+        document.addEventListener('dragenter', (e) => { e.preventDefault(); dragCounter++; if (dragCounter === 1) document.getElementById('drop-overlay').classList.add('active'); });
+        document.addEventListener('dragleave', (e) => { e.preventDefault(); dragCounter--; if (dragCounter === 0) document.getElementById('drop-overlay').classList.remove('active'); });
+        document.addEventListener('dragover', (e) => e.preventDefault());
+        document.addEventListener('drop', (e) => { e.preventDefault(); dragCounter = 0; document.getElementById('drop-overlay').classList.remove('active'); if (e.dataTransfer.files.length > 0) uploadFile(e.dataTransfer.files[0]); });
 
         async function uploadFile(file) {
-            console.log("Attempting upload...", { isUploading, sessionToken: !!sessionToken, serverConfig });
-            if (isUploading || !sessionToken) {
-                if (!sessionToken) {
-                    console.error("No session token available");
-                    showStatus("Chill! We're still connecting to the mothership...");
-                }
+            if (isUploading || !sessionToken) return;
+            if (serverConfig && file.size > serverConfig.maxFileSize) {
+                showStatus(`Max size is ${serverConfig.maxFileSizeMB}MB.`);
                 return;
             }
-
-            // Validate file before upload
-            if (!validateFile(file)) {
-                console.warn("File validation failed");
-                return;
-            }
-
-            console.log("File validated, starting upload for:", file.name);
 
             isUploading = true;
             toggleLoading(true, file.name, file.size);
 
             return new Promise((resolve, reject) => {
-                try {
-                    const xhr = new XMLHttpRequest();
+                const xhr = new XMLHttpRequest();
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) updateProgress((e.loaded / e.total) * 100, e.loaded, e.total);
+                });
 
-                    // Set up progress tracking
-                    xhr.upload.addEventListener('progress', function (e) {
-                        if (e.lengthComputable) {
-                            const percentComplete = (e.loaded / e.total) * 100;
-                            updateProgress(percentComplete, e.loaded, e.total);
+                xhr.onload = function () {
+                    try {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            const resData = JSON.parse(xhr.responseText);
+                            // UPDATED: downloadUrl now respects the absolute BunnyCDN URL from worker
+                            const downloadUrl = resData.url.startsWith('http') ? resData.url : `${WORKER_BASE_URL}${resData.url}`;
+
+                            files.unshift({
+                                id: resData.id,
+                                name: file.name,
+                                url: downloadUrl,
+                                type: file.type || 'text/plain',
+                                expires: resData.expires_at || "never",
+                                created: Date.now()
+                            });
+
+                            saveFiles();
+                            render();
+                            showStatus("FILE UPLOADED. NSA NOTIFIED.", "success");
+                            resolve(resData);
+                        } else {
+                            showStatus("Upload failed.");
+                            reject();
                         }
-                    });
-
-                    xhr.onload = function () {
-                        try {
-                            if (xhr.status >= 200 && xhr.status < 300) {
-                                const resData = JSON.parse(xhr.responseText);
-                                const downloadUrl = resData.url.startsWith('http') ? resData.url : `${WORKER_BASE_URL}${resData.url}`;
-
-                                let expiryMs = "never";
-                                if (resData.expires_at) {
-                                    expiryMs = resData.expires_at;
-                                }
-
-                                files.unshift({
-                                    id: resData.id,
-                                    name: file.name,
-                                    url: downloadUrl,
-                                    type: file.type || 'text/plain',
-                                    expires: expiryMs,
-                                    created: Date.now()
-                                });
-
-                                saveFiles();
-                                render();
-                                showStatus("FILE UPLOADED. NSA NOTIFIED.", "success");
-                                resolve(resData);
-                            } else {
-                                const resData = JSON.parse(xhr.responseText);
-                                showStatus(`Oops! Upload failed harder than my last relationship. ${resData.error || "Maybe try again?"}`);
-                                reject(new Error(resData.error));
-                            }
-                        } catch (e) {
-                            showStatus("Something went wrong in the digital void. Try again?");
-                            reject(e);
-                        } finally {
-                            isUploading = false;
-                            toggleLoading(false);
-                        }
-                    };
-
-                    xhr.onerror = function () {
-                        showStatus("Upload crashed and burned! Check your internet connection.");
-                        isUploading = false;
-                        toggleLoading(false);
-                        reject(new Error("Network error"));
-                    };
-
-                    xhr.ontimeout = function () {
-                        showStatus("Upload took too long and gave up. Even I have limits!");
-                        isUploading = false;
-                        toggleLoading(false);
-                        reject(new Error("Timeout"));
-                    };
-
-                    xhr.open('POST', `${WORKER_BASE_URL}/api/create-file`);
-                    xhr.setRequestHeader('x-session-token', sessionToken);
-                    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-                    xhr.timeout = 60000; // 60 second timeout
-
-                    xhr.send(file);
-
-                } catch (err) {
-                    isUploading = false;
-                    toggleLoading(false);
-                    showStatus("Couldn't read the file. Please try again.");
-                    reject(err);
-                }
+                    } catch (e) { reject(e); } finally { isUploading = false; toggleLoading(false); }
+                };
+                xhr.onerror = () => { isUploading = false; toggleLoading(false); showStatus("Network error."); };
+                xhr.open('POST', `${WORKER_BASE_URL}/api/create-file`);
+                xhr.setRequestHeader('x-session-token', sessionToken);
+                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+                xhr.send(file);
             });
         }
+
         function render() {
             const grid = document.getElementById('file-grid');
             const empty = document.getElementById('empty-state');
@@ -581,7 +500,7 @@
                     </div>
                     <div class="flex gap-3">
                         <button onclick="copyToClipboard('${file.url}', this)" class="active-press flex-grow bg-accent text-black border-[3px] border-black py-4 font-black text-sm shadow-brutal-sm uppercase">COPY LINK</button>
-                        <button onclick="removeFile('${file.id}')" class="active-press bg-alert text-white border-[3px] border-black px-6 py-4 font-black shadow-brutal-sm" title="Remove file">×</button>
+                        <button onclick="removeFile('${file.id}')" class="active-press bg-alert text-white border-[3px] border-black px-6 py-4 font-black shadow-brutal-sm">×</button>
                     </div>
                     <div class="border-[3px] border-black h-6 bg-[#eee] relative overflow-hidden">
                         <div id="bar-${file.id}" class="h-full bg-black transition-all duration-1000" style="width: 100%"></div>
@@ -593,18 +512,10 @@
         }
 
         function updateProgress(percent, loaded, total) {
-            const progressBar = document.getElementById('upload-progress-bar');
-            const progressText = document.getElementById('upload-progress-text');
-            const progressInfo = document.getElementById('upload-progress-info');
-
-            if (progressBar && progressText && progressInfo) {
-                progressBar.style.width = `${Math.round(percent)}%`;
-                progressText.innerText = `${Math.round(percent)}%`;
-
-                const loadedMB = (loaded / (1024 * 1024)).toFixed(1);
-                const totalMB = (total / (1024 * 1024)).toFixed(1);
-                progressInfo.innerText = `${loadedMB}MB / ${totalMB}MB`;
-            }
+            const bar = document.getElementById('upload-progress-bar');
+            const text = document.getElementById('upload-progress-text');
+            if (bar) bar.style.width = `${Math.round(percent)}%`;
+            if (text) text.innerText = `${Math.round(percent)}%`;
         }
 
         function updateTimers() {
@@ -613,28 +524,15 @@
                 const bar = document.getElementById(`bar-${f.id}`);
                 const text = document.getElementById(`time-${f.id}`);
                 if (!bar || !text) return;
-
-                if (f.expires === "never") {
-                    bar.style.width = "100%";
-                    text.innerText = "IMMORTAL FILE";
-                    return;
-                }
-
-                const totalDuration = f.expires - f.created;
+                if (f.expires === "never") { text.innerText = "IMMORTAL"; return; }
                 const remaining = f.expires - now;
-
-                if (remaining <= 0) {
-                    removeFile(f.id);
-                    return;
-                }
-
-                const pct = Math.max(0, (remaining / totalDuration) * 100);
+                if (remaining <= 0) { removeFile(f.id); return; }
+                const pct = Math.max(0, (remaining / (f.expires - f.created)) * 100);
                 const h = Math.floor(remaining / 3600000);
                 const m = Math.floor((remaining % 3600000) / 60000);
                 const s = Math.floor((remaining % 60000) / 1000);
-
                 bar.style.width = `${pct}%`;
-                text.innerText = `TIME LEFT: ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                text.innerText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
             });
         }
 
@@ -642,25 +540,15 @@
             const zone = document.getElementById('upload-default');
             const execBtn = document.getElementById('execute-btn');
             if (busy) {
-                const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
                 zone.innerHTML = `
-                    <div class="font-black text-2xl uppercase border-[4px] border-black bg-accent px-6 py-3">
-                        STEALING YOUR WIFI...
-                    </div>
-                    <p class="mt-4 text-[10px] font-bold opacity-80 break-all">${fileName}</p>
-                    <p class="text-[8px] font-bold opacity-60">${fileSizeMB}MB of pure digital goodness</p>
-                    <div class="progress-container">
-                        <div id="upload-progress-bar" class="progress-bar"></div>
-                    </div>
-                    <div class="upload-info">
-                        <div id="upload-progress-text" class="font-black">0%</div>
-                        <div id="upload-progress-info" class="text-[8px] opacity-60 mt-1">DEFINITELY NOT MINING DOGECOIN...</div>
-                    </div>
-                `;
-                execBtn.innerText = "UPLOADING AWESOMENESS...";
+                    <div class="font-black text-2xl uppercase border-[4px] border-black bg-accent px-6 py-3">STEALING WIFI...</div>
+                    <div class="progress-container"><div id="upload-progress-bar" class="progress-bar"></div></div>
+                    <div class="upload-info"><div id="upload-progress-text" class="font-black">0%</div></div>`;
+                execBtn.innerText = "UPLOADING...";
                 execBtn.disabled = true;
             } else {
-                zone.innerHTML = `<div class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">FEED ME FILES</div><p class="mt-6 text-[10px] font-bold tracking-widest leading-relaxed">TOP SECRET / SPICY MEMES / EVIDENCE</p><p class="mt-2 text-[8px] opacity-60 font-bold uppercase">DROP IT LIKE IT'S HOT (OR NOT, I'M JUST A DIV)</p>${serverConfig ? `<p class="mt-1 text-[8px] opacity-40 font-bold uppercase">Max size: ${serverConfig.maxFileSizeMB}MB (I'm not that hungry)</p>` : ''}`;
+                zone.innerHTML = `<div class="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal">FEED ME FILES</div>`;
+                updateFileSizeDisplay();
                 execBtn.innerText = "SHIP IT TO PROD";
                 execBtn.disabled = false;
             }
@@ -673,86 +561,28 @@
 
         async function copyToClipboard(u, b) {
             await navigator.clipboard.writeText(u);
-            const o = b.innerText;
-            b.innerText = 'YOINKED!';
-            b.classList.remove('bg-accent');
-            b.classList.add('bg-white');
-            setTimeout(() => {
-                b.innerText = o;
-                b.classList.remove('bg-white');
-                b.classList.add('bg-accent');
-            }, 1000);
+            const o = b.innerText; b.innerText = 'YOINKED!';
+            setTimeout(() => { b.innerText = o; }, 1000);
         }
+
         async function uploadCode() {
-            const codeExt = document.getElementById('code-ext');
-
-            let code = "";
-            if (window.editor) {
-                code = window.editor.getValue().trim();
-            } else {
-                // Fallback in case editor didn't load for some reason
-                code = document.getElementById('code-editor-container').innerText.trim();
-            }
-            if (!code) {
-                showStatus("Come on, give me some code to work with! The editor's feeling lonely");
-                return;
-            }
-
-            const extension = codeExt.value;
-            const fileName = codeExt.options[codeExt.selectedIndex].text;
-
-            let mimeType = 'text/plain';
-            switch (extension) {
-                case 'html': mimeType = 'text/html'; break;
-                case 'js': mimeType = 'text/javascript'; break;
-                case 'css': mimeType = 'text/css'; break;
-            }
-
-            // Create a blob from the code
-            const blob = new Blob([code], { type: mimeType });
-
-            // Check size before creating file
-            if (serverConfig && blob.size > serverConfig.maxFileSize) {
-                showStatus(`Whoa! That's a LOT of code! Max is ${serverConfig.maxFileSizeMB}MB, but you've got ${(blob.size / (1024 * 1024)).toFixed(1)}MB. Maybe break it up?`);
-                return;
-            }
-
-            // Create a file-like object
-            const file = new File([blob], fileName, { type: mimeType });
-
-            try {
-                await uploadFile(file);
-                // Clear editor on success
-                if (window.editor) {
-                    window.editor.setValue("// PASTE YOUR CODE HERE...\n// BUGS GO ELSEWHERE.");
-                }
-            } catch (e) {
-                // Upload failed, don't clear so user can retry
-                console.error("Upload failed", e);
-            }
+            if (!window.editor) return;
+            const code = window.editor.getValue().trim();
+            if (!code) return;
+            const ext = document.getElementById('code-ext').value;
+            const name = document.getElementById('code-ext').options[document.getElementById('code-ext').selectedIndex].text;
+            const blob = new Blob([code], { type: ext === 'html' ? 'text/html' : 'text/plain' });
+            await uploadFile(new File([blob], name));
+            window.editor.setValue("// PASTE YOUR CODE HERE...");
         }
 
         function setMode(m) {
             const isU = m === 'upload';
             document.getElementById('module-upload').classList.toggle('hidden', !isU);
             document.getElementById('module-code').classList.toggle('hidden', isU);
-
-            const btnUpload = document.getElementById('btn-mode-upload');
-            btnUpload.classList.toggle('bg-accent', isU);
-            btnUpload.classList.toggle('text-black', isU);
-            btnUpload.classList.toggle('bg-black', !isU);
-            btnUpload.classList.toggle('text-white', !isU);
-
-            const btnCode = document.getElementById('btn-mode-code');
-            btnCode.classList.toggle('bg-accent', !isU);
-            btnCode.classList.toggle('text-black', !isU);
-            btnCode.classList.toggle('bg-black', isU);
-            btnCode.classList.toggle('text-white', isU);
-
-            if (!isU && window.editor) {
-                setTimeout(() => window.editor.refresh(), 50);
-            }
+            if (!isU && window.editor) setTimeout(() => window.editor.refresh(), 50);
         }
+
         window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>

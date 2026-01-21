@@ -1,0 +1,30 @@
+{
+  "name": "file60",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:worker": "wrangler dev",
+    "dev:ui": "npx serve ui -p 3000",
+    "dev": "echo 'Run dev:worker and dev:ui in separate terminals'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/whoabhaysharma/file60.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/whoabhaysharma/file60/issues"
+  },
+  "homepage": "https://github.com/whoabhaysharma/file60#readme",
+  "devDependencies": {
+    "serve": "^14.2.5",
+    "wrangler": "^4.59.3"
+  },
+  "dependencies": {
+    "@cloudflare/kv-asset-handler": "^0.4.2"
+  }
+}
