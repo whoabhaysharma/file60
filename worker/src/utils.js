@@ -22,8 +22,8 @@ export function handleOptions() {
     return new Response(null, {
         headers: {
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, x-session-token, X-File-Name",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT",
+            "Access-Control-Allow-Headers": "Content-Type, x-session-token, X-File-Name, X-File-Size, X-File-Type",
         }
     });
 }
