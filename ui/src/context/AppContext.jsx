@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { STORAGE_KEY } from '../utils/constants.js';
 
 const AppContext = createContext();
 
@@ -11,10 +12,28 @@ export function useApp() {
 }
 
 export function AppProvider({ children }) {
-    const [files, setFiles] = useState([]);
+    const [files, setFiles] = useState(() => {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const loadedFiles = JSON.parse(saved);
+                // Filter out expired files
+                return loadedFiles.filter(f => {
+                    if (f.expires === 'never') return true;
+                    return Date.now() < f.expires;
+                });
+            }
+        } catch (error) {
+            console.error('Error initializing files from storage:', error);
+        }
+        return [];
+    });
+
     const [isUploading, setIsUploading] = useState(false);
     const [sessionToken, setSessionToken] = useState(null);
     const [sessionReady, setSessionReady] = useState(false);
+    const [isInitializing, setIsInitializing] = useState(false);
+    const [initializeSession, setInitializeSession] = useState(() => null);
 
     const addFile = (file) => {
         setFiles(prev => [file, ...prev]);
@@ -34,7 +53,11 @@ export function AppProvider({ children }) {
         sessionToken,
         setSessionToken,
         sessionReady,
-        setSessionReady
+        setSessionReady,
+        isInitializing,
+        setIsInitializing,
+        initializeSession,
+        setInitializeSession
     };
 
     return (

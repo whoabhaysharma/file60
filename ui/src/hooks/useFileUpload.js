@@ -8,12 +8,12 @@ import { validateFile } from '../utils/validators.js';
  * Custom hook for file upload functionality
  */
 export function useFileUpload(onSuccess, onError) {
-    const { addFile, isUploading, setIsUploading, sessionToken } = useApp();
+    const { addFile, isUploading, setIsUploading, sessionToken, sessionReady, initializeSession, isInitializing } = useApp();
     const { apiUrl, serverConfig } = useConfig();
     const { uploadFile: apiUploadFile } = useApi();
     const [uploadProgress, setUploadProgress] = useState(0);
 
-    const uploadFile = useCallback(async (file) => {
+    const uploadFile = useCallback(async (file, overrideToken) => {
         // Validate
         const validation = validateFile(file, serverConfig.maxFileSize);
         if (!validation.valid) {
@@ -21,8 +21,16 @@ export function useFileUpload(onSuccess, onError) {
             return;
         }
 
-        // Check if already uploading or no session
-        if (isUploading || !sessionToken) {
+        const tokenToUse = overrideToken || sessionToken;
+
+        // Check if already uploading
+        if (isUploading) {
+            return;
+        }
+
+        // Check for session token
+        if (!tokenToUse) {
+            onError?.('Session token not available');
             return;
         }
 
@@ -31,7 +39,7 @@ export function useFileUpload(onSuccess, onError) {
 
         try {
             // Step 1: Get Presigned URL from Backend
-            const resData = await apiUploadFile(file, sessionToken);
+            const resData = await apiUploadFile(file, tokenToUse);
 
             if (!resData.upload_url) {
                 throw new Error('Server did not provide an upload URL.');

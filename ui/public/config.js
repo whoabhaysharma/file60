@@ -7,7 +7,7 @@
 window.APP_CONFIG = {
     // Use local worker for localhost, production worker for deployed site
     API_URL: window.location.hostname === 'localhost'
-        ? 'http://localhost:8787'  // Local wrangler dev server
+        ? 'https://file60.abhaysharma-as2719.workers.dev'  // Local wrangler dev server
         : 'https://file60.abhaysharma-as2719.workers.dev',
     // Use test key for localhost, real key for production
     TURNSTILE_SITE_KEY: window.location.hostname === 'localhost'

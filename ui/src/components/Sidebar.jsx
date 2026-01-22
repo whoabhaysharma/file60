@@ -48,6 +48,7 @@ export const Sidebar = forwardRef(({ onFileSelect, isUploading, uploadProgress }
                     <CodeEditor onUpload={onFileSelect} />
                 </div>
             )}
+
         </aside>
     );
 });

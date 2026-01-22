@@ -12,7 +12,7 @@ export function CodeEditor({ onUpload }) {
     const editorRef = useRef(null);
     const containerRef = useRef(null);
     const [ext, setExt] = useState('html');
-    const { sessionReady } = useApp();
+    const { isInitializing } = useApp();
 
     useEffect(() => {
         if (!containerRef.current || editorRef.current) return;
@@ -42,7 +42,7 @@ export function CodeEditor({ onUpload }) {
     }, [ext]);
 
     const handleUpload = () => {
-        if (!editorRef.current || !sessionReady) return;
+        if (!editorRef.current || isInitializing) return;
 
         const code = editorRef.current.getValue().trim();
         if (!code) return;
@@ -75,7 +75,7 @@ export function CodeEditor({ onUpload }) {
                     value={ext}
                     onChange={(e) => setExt(e.target.value)}
                     className="bg-terminal text-accent text-[9px] border-[1px] border-accent/50 px-2 py-0.5 uppercase font-bold outline-none"
-                    disabled={!sessionReady}
+                    disabled={isInitializing}
                 >
                     <option value="html">index.html</option>
                     <option value="js">script.js</option>
@@ -86,13 +86,13 @@ export function CodeEditor({ onUpload }) {
             <div ref={containerRef} className="flex-grow relative overflow-hidden bg-terminal min-h-0" />
             <button
                 onClick={handleUpload}
-                disabled={!sessionReady}
-                className={`active-press border-t-[4px] border-black py-4 font-black text-xs uppercase transition-colors shrink-0 ${sessionReady
-                        ? 'bg-accent hover:bg-white cursor-pointer'
-                        : 'bg-gray-400 cursor-not-allowed opacity-60'
+                disabled={isInitializing}
+                className={`active-press border-t-[4px] border-black py-4 font-black text-xs uppercase transition-colors shrink-0 ${!isInitializing
+                    ? 'bg-accent hover:bg-white cursor-pointer'
+                    : 'bg-gray-400 cursor-not-allowed opacity-60'
                     }`}
             >
-                {sessionReady ? 'SHIP IT TO PROD' : 'INITIALIZING...'}
+                {isInitializing ? 'INITIALIZING...' : 'SHIP IT TO PROD'}
             </button>
         </div>
     );

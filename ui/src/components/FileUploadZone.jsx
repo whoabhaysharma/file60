@@ -5,17 +5,16 @@ import { useApp } from '../context/AppContext.jsx';
 export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
     const fileInputRef = useRef(null);
     const { serverConfig } = useConfig();
-    const { sessionReady } = useApp();
+    const { isInitializing } = useApp();
 
     const handleClick = () => {
-        if (!sessionReady) {
-            return; // Block clicks until session is ready
-        }
+        // Always allow click to trigger file selection
+        // Initialization happens in useFileUpload hook
         fileInputRef.current?.click();
     };
 
     const handleFileChange = (e) => {
-        if (e.target.files.length > 0 && sessionReady) {
+        if (e.target.files.length > 0) {
             onFileSelect(e.target.files[0]);
         }
     };
@@ -23,12 +22,12 @@ export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
     return (
         <div
             onClick={handleClick}
-            className={`flex-grow min-h-[200px] border-[4px] border-black ${!sessionReady
-                    ? 'bg-gray-300 cursor-not-allowed opacity-60'
-                    : 'bg-diagonal-green hover:bg-accent cursor-crosshair'
+            className={`flex-grow min-h-[200px] border-[4px] border-black ${isInitializing
+                ? 'bg-gray-300 cursor-wait opacity-80'
+                : 'bg-diagonal-green hover:bg-accent cursor-crosshair'
                 } transition-all flex flex-col justify-center items-center p-8 relative group shadow-brutal`}
         >
-            {!sessionReady ? (
+            {isInitializing ? (
                 <div className="text-center">
                     <div className="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal">
                         INITIALIZING...
@@ -70,7 +69,7 @@ export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
                 type="file"
                 className="hidden"
                 onChange={handleFileChange}
-                disabled={!sessionReady}
+                disabled={isInitializing}
             />
         </div>
     );
