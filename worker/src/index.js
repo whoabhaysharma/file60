@@ -13,7 +13,8 @@ export default {
         try {
             if (url.pathname === "/api/init-session") {
                 const secret = env.JWT_SECRET;
-                return await initSession(secret, config);
+                const turnstileToken = req.headers.get("X-Turnstile-Token");
+                return await initSession(secret, config, turnstileToken);
             }
 
             if (url.pathname === "/api/create-file") {
