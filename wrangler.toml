@@ -15,4 +15,4 @@ MAX_FILE_SIZE = 104857600  # 100MB in bytes
 EXPIRY_MS = 3600000        # 1 hour in milliseconds
 
 # URLs
-R2_PUBLIC_URL = "https://cdn.example.com"
+R2_PUBLIC_URL = "https://file60.b-cdn.net"
