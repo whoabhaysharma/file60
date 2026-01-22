@@ -9,14 +9,18 @@ export function useApi() {
     const { setSessionToken } = useApp();
     const { apiUrl, updateServerConfig } = useConfig();
 
-    const initSession = useCallback(async () => {
+    const initSession = useCallback(async (turnstileToken) => {
         try {
             if (!apiUrl) {
                 console.warn('API URL not configured. Please set window.APP_CONFIG.API_URL in config.js');
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/api/init-session`);
+            const response = await fetch(`${apiUrl}/api/init-session`, {
+                headers: {
+                    'x-turnstile-token': turnstileToken || ''
+                }
+            });
 
             if (!response.ok) {
                 throw new Error('Failed to initialize session');

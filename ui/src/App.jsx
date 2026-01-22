@@ -28,10 +28,38 @@ function AppContent() {
     useTimer();
 
     // Initialize session on mount
+    // Initialize session on mount (Wait for Turnstile)
     useEffect(() => {
-        initSession().catch(err => {
-            showError(`INIT FAILED: ${err.message || 'Unknown error'}`);
-        });
+        // defined in index.html
+        if (window.turnstile) {
+            const siteKey = (window.APP_CONFIG && window.APP_CONFIG.TURNSTILE_SITE_KEY) || import.meta.env.VITE_TURNSTILE_SITE_KEY;
+
+            if (!siteKey) {
+                console.error("Turnstile Site Key not found in config or env");
+                // Proceed without it? or fail? Failsafe to calling initSession anyway might be risky if backend enforces it.
+                // But for now, let's try to render what we can or just log error.
+            }
+
+            const widgetId = window.turnstile.render('#turnstile-widget', {
+                sitekey: siteKey,
+                callback: async (token) => {
+                    try {
+                        await initSession(token);
+                        // Optional: remove widget or keep invisible
+                    } catch (err) {
+                        showError(`INIT FAILED: ${err.message || 'Unknown error'}`);
+                    }
+                },
+            });
+
+            return () => {
+                if (window.turnstile) window.turnstile.remove(widgetId);
+            };
+        } else {
+            // Fallback for dev or error
+            console.warn("Turnstile not found on window");
+            initSession().catch(err => console.error(err));
+        }
     }, [initSession, showError]);
 
     // Drag and drop handlers
@@ -83,6 +111,7 @@ function AppContent() {
 
     return (
         <div className="flex flex-col h-screen bg-grid">
+            <div id="turnstile-widget" className="fixed top-4 right-4 z-50"></div>
             <Notification notification={notification} />
             <DragDropOverlay active={dragActive} />
 

@@ -12,8 +12,8 @@ export default {
 
         try {
             if (url.pathname === "/api/init-session") {
-                const secret = env.JWT_SECRET;
-                return await initSession(secret, config);
+                // const secret = env.JWT_SECRET; // No longer needed here
+                return await initSession(req, env, config);
             }
 
             if (url.pathname === "/api/create-file") {

@@ -1,9 +1,23 @@
-import { json, error } from './utils.js';
+import { json, error, verifyTurnstile } from './utils.js';
 import { createJWT } from './auth.js';
 
-export async function initSession(secret, config) {
+export async function initSession(req, env, config) {
+    const turnstileToken = req.headers.get("x-turnstile-token");
+    const ip = req.headers.get("CF-Connecting-IP");
+
+    if (!turnstileToken) {
+        // Optional: Allow bypassing in dev if needed, or fail hard.
+        // For now, fail hard.
+        throw { message: "Turnstile token required", status: 403 };
+    }
+
+    const isValid = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, ip);
+    if (!isValid) {
+        throw { message: "Invalid Captcha", status: 403 };
+    }
+
     const now = Math.floor(Date.now() / 1000);
-    const token = await createJWT({ iat: now, exp: now + 86400 }, secret);
+    const token = await createJWT({ iat: now, exp: now + 86400 }, env.JWT_SECRET);
     return json({
         token,
         config: {

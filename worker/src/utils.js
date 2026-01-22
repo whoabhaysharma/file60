@@ -23,7 +23,32 @@ export function handleOptions() {
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT",
-            "Access-Control-Allow-Headers": "Content-Type, x-session-token, X-File-Name, X-File-Size, X-File-Type",
+            "Access-Control-Allow-Headers": "Content-Type, x-session-token, X-File-Name, X-File-Size, X-File-Type, x-turnstile-token",
         }
     });
+}
+
+export async function verifyTurnstile(token, secretKey, ip) {
+    const url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+    const formData = new FormData();
+    formData.append('secret', secretKey);
+    formData.append('response', token);
+    if (ip) formData.append('remoteip', ip);
+
+    try {
+        const result = await fetch(url, {
+            body: formData,
+            method: 'POST',
+        });
+
+        const outcome = await result.json();
+        if (!outcome.success) {
+            console.error("Turnstile verification failed:", outcome);
+            return false;
+        }
+        return true;
+    } catch (err) {
+        console.error("Turnstile error:", err);
+        return false; // Fail secure
+    }
 }
