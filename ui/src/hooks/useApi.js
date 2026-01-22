@@ -45,6 +45,7 @@ export function useApi() {
             headers: {
                 'x-session-token': sessionToken,
                 'Content-Type': file.type || 'application/octet-stream',
+                'X-File-Type': file.type || 'application/octet-stream', // Explicitly pass type for worker
                 'Content-Length': file.size.toString(),
                 'X-File-Name': encodeURIComponent(file.name) // Encode to handle special chars safe in headers
             }

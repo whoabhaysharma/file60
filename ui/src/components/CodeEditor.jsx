@@ -55,7 +55,7 @@ export function CodeEditor({ onUpload }) {
         }[ext];
 
         const blob = new Blob([code], { type: MIME_TYPES[ext] || 'text/plain' });
-        const file = new File([blob], fileName);
+        const file = new File([blob], fileName, { type: MIME_TYPES[ext] || 'text/plain' });
 
         onUpload(file);
 
