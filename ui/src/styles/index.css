@@ -6,3 +6,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@layer utilities {
+    .h-dvh {
+        height: 100vh;
+        height: 100dvh;
+    }
+}
