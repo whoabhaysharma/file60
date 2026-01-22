@@ -14,8 +14,9 @@ export async function initSession(secret, config) {
     });
 }
 
+
 import { getDownloadUrl } from './utils.js';
-import { generatePresignedUrl } from './aws.js';
+import { generatePresignedUrl, getFileFromS3 } from './aws.js';
 
 export async function createFile(req, env, config) {
     console.log("ENV KEYS:", Object.keys(env)); // DEBUG: Check what vars are loaded
@@ -125,18 +126,18 @@ export async function createFile(req, env, config) {
 
 export async function getFile(req, env) {
     const id = req.url.split("/").pop();
-    const file = await env.R2.get(`temp/${id}`);
+    const file = await getFileFromS3(env, `temp/${id}`);
 
     if (!file) return error("File not found", 404);
 
-    const expires = Number(file.customMetadata.expires);
+    const expires = Number(file.Metadata?.expires);
     if (expires && Date.now() > expires) {
         return error("File expired", 410);
     }
 
-    return new Response(file.body, {
+    return new Response(file.Body, {
         headers: {
-            "Content-Type": file.httpMetadata.contentType || "application/octet-stream",
+            "Content-Type": file.ContentType || "application/octet-stream",
             "Access-Control-Allow-Origin": "*",
             "X-File-Expires": expires ? new Date(expires).toISOString() : "never"
         }

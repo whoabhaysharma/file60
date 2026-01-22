@@ -9,6 +9,7 @@ worker-site
 
 # Environment
 .env
+.dev.vars
 .env.local
 .env.*.local
 

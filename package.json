@@ -12,7 +12,7 @@
     "preview:ui": "vite preview ui",
     "dev": "echo 'Run dev:worker and dev:ui in separate terminals'",
     "deploy:worker": "wrangler deploy --minify",
-    "deploy:ui": "npm run build:ui && wrangler pages deploy dist --project-name file60-ui"
+    "deploy:ui": "npm run build:ui && wrangler pages deploy ui/dist --project-name file60 --branch main"
   },
   "repository": {
     "type": "git",

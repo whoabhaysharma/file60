@@ -6,5 +6,5 @@
 window.APP_CONFIG = {
     // Set this to your worker URL if you want to override the build-time env var
     // API_URL: 'https://file60.whoabhaysharma.workers.dev'
-    API_URL: 'http://localhost:8788'
+    API_URL: 'https://file60.abhaysharma-as2719.workers.dev'
 };
