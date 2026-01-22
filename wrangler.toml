@@ -5,3 +5,14 @@ compatibility_date = "2024-01-01"
 
 
 keep_vars = true
+
+[vars]
+# Rate Limiting: Number of requests allowed per IP per minute (approx)
+RATE_LIMIT_HITS = 50
+
+# File Limits
+MAX_FILE_SIZE = 104857600  # 100MB in bytes
+EXPIRY_MS = 3600000        # 1 hour in milliseconds
+
+# URLs
+R2_PUBLIC_URL = "https://cdn.example.com"
