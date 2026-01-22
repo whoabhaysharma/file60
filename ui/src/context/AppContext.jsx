@@ -14,6 +14,7 @@ export function AppProvider({ children }) {
     const [files, setFiles] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
     const [sessionToken, setSessionToken] = useState(null);
+    const [sessionReady, setSessionReady] = useState(false);
 
     const addFile = (file) => {
         setFiles(prev => [file, ...prev]);
@@ -31,7 +32,9 @@ export function AppProvider({ children }) {
         isUploading,
         setIsUploading,
         sessionToken,
-        setSessionToken
+        setSessionToken,
+        sessionReady,
+        setSessionReady
     };
 
     return (

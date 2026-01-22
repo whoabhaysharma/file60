@@ -6,11 +6,13 @@ import 'codemirror/mode/css/css.js';
 import 'codemirror/mode/xml/xml.js';
 import 'codemirror/mode/htmlmixed/htmlmixed.js';
 import { CODE_MODES, MIME_TYPES } from '../utils/constants.js';
+import { useApp } from '../context/AppContext.jsx';
 
 export function CodeEditor({ onUpload }) {
     const editorRef = useRef(null);
     const containerRef = useRef(null);
     const [ext, setExt] = useState('html');
+    const { sessionReady } = useApp();
 
     useEffect(() => {
         if (!containerRef.current || editorRef.current) return;
@@ -40,7 +42,7 @@ export function CodeEditor({ onUpload }) {
     }, [ext]);
 
     const handleUpload = () => {
-        if (!editorRef.current) return;
+        if (!editorRef.current || !sessionReady) return;
 
         const code = editorRef.current.getValue().trim();
         if (!code) return;
@@ -73,6 +75,7 @@ export function CodeEditor({ onUpload }) {
                     value={ext}
                     onChange={(e) => setExt(e.target.value)}
                     className="bg-terminal text-accent text-[9px] border-[1px] border-accent/50 px-2 py-0.5 uppercase font-bold outline-none"
+                    disabled={!sessionReady}
                 >
                     <option value="html">index.html</option>
                     <option value="js">script.js</option>
@@ -83,9 +86,13 @@ export function CodeEditor({ onUpload }) {
             <div ref={containerRef} className="flex-grow relative overflow-hidden bg-terminal min-h-0" />
             <button
                 onClick={handleUpload}
-                className="active-press border-t-[4px] border-black bg-accent py-4 font-black text-xs uppercase hover:bg-white transition-colors shrink-0"
+                disabled={!sessionReady}
+                className={`active-press border-t-[4px] border-black py-4 font-black text-xs uppercase transition-colors shrink-0 ${sessionReady
+                        ? 'bg-accent hover:bg-white cursor-pointer'
+                        : 'bg-gray-400 cursor-not-allowed opacity-60'
+                    }`}
             >
-                SHIP IT TO PROD
+                {sessionReady ? 'SHIP IT TO PROD' : 'INITIALIZING...'}
             </button>
         </div>
     );

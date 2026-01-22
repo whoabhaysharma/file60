@@ -6,7 +6,7 @@ import { useConfig } from '../context/ConfigContext.jsx';
  * Custom hook for API operations
  */
 export function useApi() {
-    const { setSessionToken } = useApp();
+    const { setSessionToken, setSessionReady } = useApp();
     const { apiUrl, updateServerConfig } = useConfig();
 
     const initSession = useCallback(async (turnstileToken) => {
@@ -29,13 +29,14 @@ export function useApi() {
             const data = await response.json();
             setSessionToken(data.token);
             updateServerConfig(data.config);
+            setSessionReady(true); // Mark session as ready for file uploads
 
             return data;
         } catch (error) {
             console.error('Init session error:', error);
             throw error;
         }
-    }, [apiUrl, setSessionToken, updateServerConfig]);
+    }, [apiUrl, setSessionToken, setSessionReady, updateServerConfig]);
 
     const uploadFile = useCallback(async (file, sessionToken) => {
         // This is now just a metadata request to get the Presigned URL

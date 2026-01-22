@@ -1,16 +1,21 @@
 import React, { useRef } from 'react';
 import { useConfig } from '../context/ConfigContext.jsx';
+import { useApp } from '../context/AppContext.jsx';
 
 export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
     const fileInputRef = useRef(null);
     const { serverConfig } = useConfig();
+    const { sessionReady } = useApp();
 
     const handleClick = () => {
+        if (!sessionReady) {
+            return; // Block clicks until session is ready
+        }
         fileInputRef.current?.click();
     };
 
     const handleFileChange = (e) => {
-        if (e.target.files.length > 0) {
+        if (e.target.files.length > 0 && sessionReady) {
             onFileSelect(e.target.files[0]);
         }
     };
@@ -18,9 +23,21 @@ export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
     return (
         <div
             onClick={handleClick}
-            className="flex-grow min-h-[200px] border-[4px] border-black bg-diagonal-green hover:bg-accent transition-all cursor-crosshair flex flex-col justify-center items-center p-8 relative group shadow-brutal"
+            className={`flex-grow min-h-[200px] border-[4px] border-black ${!sessionReady
+                    ? 'bg-gray-300 cursor-not-allowed opacity-60'
+                    : 'bg-diagonal-green hover:bg-accent cursor-crosshair'
+                } transition-all flex flex-col justify-center items-center p-8 relative group shadow-brutal`}
         >
-            {isUploading ? (
+            {!sessionReady ? (
+                <div className="text-center">
+                    <div className="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal">
+                        INITIALIZING...
+                    </div>
+                    <p className="mt-4 text-[10px] font-bold opacity-60">
+                        VERIFYING HUMANITY, PLEASE WAIT
+                    </p>
+                </div>
+            ) : isUploading ? (
                 <div className="text-center w-full">
                     <div className="font-black text-2xl uppercase border-[4px] border-black bg-accent px-6 py-3">
                         STEALING WIFI...
@@ -53,6 +70,7 @@ export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
                 type="file"
                 className="hidden"
                 onChange={handleFileChange}
+                disabled={!sessionReady}
             />
         </div>
     );

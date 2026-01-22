@@ -20,7 +20,6 @@ function AppContent() {
     const [dragActive, setDragActive] = useState(false);
     const [dragCounter, setDragCounter] = useState(0);
     const sidebarRef = useRef(null);
-    const [isVerifying, setIsVerifying] = useState(true);
 
     // Initialize localStorage sync
     useLocalStorage();
@@ -39,7 +38,6 @@ function AppContent() {
 
             if (!siteKey) {
                 console.error("Turnstile Site Key not found");
-                setIsVerifying(false);
                 return;
             }
 
@@ -50,10 +48,6 @@ function AppContent() {
                         if (!mounted) return;
                         try {
                             await initSession(token);
-                            // Wait a bit to show the success state before hiding
-                            setTimeout(() => {
-                                if (mounted) setIsVerifying(false);
-                            }, 800);
                         } catch (err) {
                             showError(`INIT FAILED: ${err.message || 'Unknown error'}`);
                         }
@@ -61,12 +55,10 @@ function AppContent() {
                     'error-callback': () => {
                         if (!mounted) return;
                         console.error("Turnstile widget error");
-                        setIsVerifying(false);
                     }
                 });
             } catch (err) {
                 console.error("Failed to render Turnstile:", err);
-                setIsVerifying(false);
             }
         };
 
@@ -81,7 +73,6 @@ function AppContent() {
                 clearInterval(pollInterval);
                 console.warn("Turnstile script timeout");
                 if (mounted) {
-                    setIsVerifying(false);
                     initSession().catch(err => console.error(err));
                 }
             }
@@ -149,14 +140,9 @@ function AppContent() {
 
     return (
         <div className="flex flex-col h-screen bg-grid">
-            {isVerifying && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center gap-4">
-                        <div className="text-sm font-bold opacity-60">VERIFYING HUMANITY...</div>
-                        <div id="turnstile-widget"></div>
-                    </div>
-                </div>
-            )}
+            {/* Turnstile widget - Cloudflare controls visibility automatically */}
+            <div id="turnstile-widget"></div>
+
             <Notification notification={notification} />
             <DragDropOverlay active={dragActive} />
 
