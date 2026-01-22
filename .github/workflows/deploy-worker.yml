@@ -33,17 +33,3 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --minify
-          secrets: |
-            R2_ACCESS_KEY_ID
-            R2_SECRET_ACCESS_KEY
-            R2_ACCOUNT_ID
-            R2_BUCKET_NAME
-            R2_PUBLIC_URL
-            JWT_SECRET
-        env:
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
