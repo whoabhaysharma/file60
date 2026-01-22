@@ -1,7 +1,13 @@
 import { json, error } from './utils.js';
 import { createJWT } from './auth.js';
 
-export async function initSession(secret, config) {
+export async function initSession(secret, config, turnstileToken) {
+    if (config.TURNSTILE_SECRET_KEY) {
+        if (!turnstileToken) throw { message: "Missing Turnstile token", status: 403 };
+        const valid = await verifyTurnstile(turnstileToken, config.TURNSTILE_SECRET_KEY);
+        if (!valid) throw { message: "Turnstile verification failed", status: 403 };
+    }
+
     const now = Math.floor(Date.now() / 1000);
     const token = await createJWT({ iat: now, exp: now + 86400 }, secret);
     return json({
@@ -147,4 +153,22 @@ export async function getFile(req, env) {
             "X-File-Expires": expires ? new Date(expires).toISOString() : "never"
         }
     });
+}
+
+async function verifyTurnstile(token, secretKey) {
+    const formData = new FormData();
+    formData.append('secret', secretKey);
+    formData.append('response', token);
+
+    try {
+        const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            body: formData,
+            method: 'POST',
+        });
+        const outcome = await result.json();
+        return outcome.success;
+    } catch (e) {
+        console.error("Turnstile verification error:", e);
+        return false;
+    }
 }

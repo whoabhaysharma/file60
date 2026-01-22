@@ -13,6 +13,7 @@ export function getConfig(env) {
 
         // Secrets (Explicitly mapped for clarity, though usually accessed directly)
         JWT_SECRET: env.JWT_SECRET,
+        TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY,
 
         // R2 Credentials
         R2: {

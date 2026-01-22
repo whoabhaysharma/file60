@@ -15,6 +15,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -215,6 +216,10 @@
 
 <body class="flex flex-col h-screen bg-grid">
 
+    <div id="turnstile-wrapper" class="fixed inset-0 flex items-center justify-center z-[200] pointer-events-none">
+        <div id="turnstile-widget" class="pointer-events-auto"></div>
+    </div>
+
     <div id="notification-box"
         class="fixed top-14 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md pointer-events-none">
         <div id="notification-content"
@@ -328,7 +333,23 @@
 
         async function init() {
             try {
-                const res = await fetch(`${WORKER_BASE_URL}/api/init-session`);
+                let tToken = null;
+                const SITE_KEY = '0x4AAAAAACOKCe1pikeARO-o';
+
+                if (window.turnstile) {
+                     tToken = await new Promise((resolve) => {
+                         turnstile.render('#turnstile-widget', {
+                             sitekey: SITE_KEY,
+                             callback: function(token) { resolve(token); },
+                             "error-callback": function() { resolve(null); }
+                         });
+                     });
+                }
+
+                const headers = {};
+                if (tToken) headers['X-Turnstile-Token'] = tToken;
+
+                const res = await fetch(`${WORKER_BASE_URL}/api/init-session`, { headers });
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 sessionToken = data.token;
