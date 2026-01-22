@@ -81,7 +81,7 @@ function AppContent() {
     const { initSession } = useApi();
     const { showError, showSuccess, notification } = useNotification();
     const { uploadFile, isUploading, uploadProgress } = useFileUpload(showSuccess, showError);
-    const { setIsInitializing } = useApp();
+    const { setIsInitializing, sessionToken } = useApp(); // Destructure sessionToken and setIsInitializing
     useLocalStorage();
 
     const [turnstileToken, setTurnstileToken] = useState(null);
@@ -92,22 +92,30 @@ function AppContent() {
     const handleFileUpload = useCallback(async (file) => {
         if (!file) return;
 
-        if (!turnstileToken) {
+        // If we don't have a session AND don't have a captcha response, we can't proceed
+        if (!sessionToken && !turnstileToken) {
             showError("Security check in progress. Please wait.");
             return;
         }
 
         try {
-            setIsInitializing(true);
-            const sessionData = await initSession(turnstileToken);
-            setIsInitializing(false);
-            await uploadFile(file, sessionData.token);
+            let tokenToUse = sessionToken;
+
+            // Only initialize if we don't have a session yet
+            if (!tokenToUse) {
+                setIsInitializing(true);
+                const sessionData = await initSession(turnstileToken);
+                tokenToUse = sessionData.token;
+                setIsInitializing(false);
+            }
+
+            await uploadFile(file, tokenToUse);
         } catch (err) {
-            showError(err.message || "Session initialization failed");
+            showError(err.message || "Upload failed");
         } finally {
             setIsInitializing(false);
         }
-    }, [turnstileToken, initSession, uploadFile, setIsInitializing, showError]);
+    }, [turnstileToken, sessionToken, initSession, uploadFile, setIsInitializing, showError]);
 
     const handleDrop = (e) => {
         e.preventDefault();
