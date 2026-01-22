@@ -25,12 +25,12 @@ export async function createFile(req, env, config) {
     // We no longer read the body here. The CLIENT uploads the body to the URL we return.
 
     // Validate request metadata
-    const contentLength = Number(req.headers.get("Content-Length"));
+    const fileSize = Number(req.headers.get("X-File-Size") || req.headers.get("Content-Length"));
     // Note: With presigned URLs, we enforce size via Signed URL headers or rely on bucket policies, 
     // but checking intent here is good UI UX.
-    if (contentLength > config.MAX_FILE_SIZE) throw { message: "File too large", status: 413 };
+    if (fileSize > config.MAX_FILE_SIZE) throw { message: "File too large", status: 413 };
 
-    const contentType = req.headers.get("Content-Type") || "application/octet-stream";
+    const contentType = req.headers.get("X-File-Type") || req.headers.get("Content-Type") || "application/octet-stream";
 
     // Get Filename from header (encoded)
     const encodedName = req.headers.get("X-File-Name");
@@ -92,12 +92,13 @@ export async function createFile(req, env, config) {
     // Calculate expiry
     const now = Date.now();
     const expiryTimestamp = now + config.EXPIRY_MS;
+    const cacheControl = `public, max-age=${Math.floor(config.EXPIRY_MS / 1000)}`;
 
     let uploadUrl;
     try {
         // 1. Generate Presigned PUT URL
         // We pass the ENV to the helper because that's where the secrets live
-        uploadUrl = await generatePresignedUrl(env, objectKey, contentType);
+        uploadUrl = await generatePresignedUrl(env, objectKey, contentType, cacheControl);
     } catch (err) {
         // Fallback or Error if Keys missing
         console.error("Presign Error:", err);
@@ -117,6 +118,10 @@ export async function createFile(req, env, config) {
     return json({
         id: publicId,
         upload_url: uploadUrl, // usage: PUT request with file body
+        required_headers: {
+            "Content-Type": contentType,
+            "Cache-Control": cacheControl
+        },
         url: publicUrl,
         expires_at: expiryTimestamp,
         expires_at_iso: new Date(expiryTimestamp).toISOString(),

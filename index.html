@@ -442,44 +442,71 @@
             isUploading = true;
             toggleLoading(true, file.name, file.size);
 
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.upload.addEventListener('progress', (e) => {
-                    if (e.lengthComputable) updateProgress((e.loaded / e.total) * 100, e.loaded, e.total);
+            try {
+                // Step 1: Init Upload (Get Presigned URL)
+                const initRes = await fetch(`${WORKER_BASE_URL}/api/create-file`, {
+                    method: 'POST',
+                    headers: {
+                        'x-session-token': sessionToken,
+                        'X-File-Name': encodeURIComponent(file.name),
+                        'X-File-Size': file.size.toString(),
+                        'X-File-Type': file.type || 'application/octet-stream'
+                    }
                 });
 
-                xhr.onload = function () {
-                    try {
+                if (!initRes.ok) throw new Error("Failed to init upload");
+                const data = await initRes.json();
+
+                // Step 2: Upload File to Storage
+                await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) updateProgress((e.loaded / e.total) * 100, e.loaded, e.total);
+                    });
+
+                    xhr.onload = function () {
                         if (xhr.status >= 200 && xhr.status < 300) {
-                            const resData = JSON.parse(xhr.responseText);
-                            // UPDATED: downloadUrl now respects the absolute BunnyCDN URL from worker
-                            const downloadUrl = resData.url.startsWith('http') ? resData.url : `${WORKER_BASE_URL}${resData.url}`;
-
-                            files.unshift({
-                                id: resData.id,
-                                name: file.name,
-                                url: downloadUrl,
-                                type: file.type || 'text/plain',
-                                expires: resData.expires_at || "never",
-                                created: Date.now()
-                            });
-
-                            saveFiles();
-                            render();
-                            showStatus("FILE UPLOADED. NSA NOTIFIED.", "success");
-                            resolve(resData);
+                            resolve();
                         } else {
-                            showStatus("Upload failed.");
-                            reject();
+                            reject(new Error("Storage upload failed"));
                         }
-                    } catch (e) { reject(e); } finally { isUploading = false; toggleLoading(false); }
-                };
-                xhr.onerror = () => { isUploading = false; toggleLoading(false); showStatus("Network error."); };
-                xhr.open('POST', `${WORKER_BASE_URL}/api/create-file`);
-                xhr.setRequestHeader('x-session-token', sessionToken);
-                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-                xhr.send(file);
-            });
+                    };
+                    xhr.onerror = () => reject(new Error("Network error during upload"));
+
+                    xhr.open('PUT', data.upload_url);
+                    if (data.required_headers) {
+                        Object.entries(data.required_headers).forEach(([k, v]) => {
+                             xhr.setRequestHeader(k, v);
+                        });
+                    } else {
+                        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+                    }
+                    xhr.send(file);
+                });
+
+                // Success
+                const downloadUrl = data.url.startsWith('http') ? data.url : `${WORKER_BASE_URL}${data.url}`;
+
+                files.unshift({
+                    id: data.id,
+                    name: file.name,
+                    url: downloadUrl,
+                    type: file.type || 'text/plain',
+                    expires: data.expires_at || "never",
+                    created: Date.now()
+                });
+
+                saveFiles();
+                render();
+                showStatus("FILE UPLOADED. NSA NOTIFIED.", "success");
+
+            } catch (err) {
+                console.error(err);
+                showStatus("Upload failed: " + (err.message || "Unknown error"));
+            } finally {
+                isUploading = false;
+                toggleLoading(false);
+            }
         }
 
         function render() {
