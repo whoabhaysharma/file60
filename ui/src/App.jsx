@@ -119,7 +119,7 @@ function AppContent() {
 
     return (
         <div
-            className="flex flex-col h-screen bg-grid relative"
+            className="flex flex-col h-dvh bg-grid relative"
             onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
             onDragLeave={() => setDragActive(false)}
             onDrop={handleDrop}
