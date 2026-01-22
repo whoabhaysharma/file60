@@ -20,6 +20,7 @@ function AppContent() {
     const [dragActive, setDragActive] = useState(false);
     const [dragCounter, setDragCounter] = useState(0);
     const sidebarRef = useRef(null);
+    const [isVerifying, setIsVerifying] = useState(true);
 
     // Initialize localStorage sync
     useLocalStorage();
@@ -27,39 +28,76 @@ function AppContent() {
     // Initialize timer for file expiration
     useTimer();
 
-    // Initialize session on mount
     // Initialize session on mount (Wait for Turnstile)
     useEffect(() => {
-        // defined in index.html
-        if (window.turnstile) {
+        let widgetId;
+        let mounted = true;
+        let pollInterval;
+
+        const renderTurnstile = () => {
             const siteKey = (window.APP_CONFIG && window.APP_CONFIG.TURNSTILE_SITE_KEY) || import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
             if (!siteKey) {
-                console.error("Turnstile Site Key not found in config or env");
-                // Proceed without it? or fail? Failsafe to calling initSession anyway might be risky if backend enforces it.
-                // But for now, let's try to render what we can or just log error.
+                console.error("Turnstile Site Key not found");
+                setIsVerifying(false);
+                return;
             }
 
-            const widgetId = window.turnstile.render('#turnstile-widget', {
-                sitekey: siteKey,
-                callback: async (token) => {
-                    try {
-                        await initSession(token);
-                        // Optional: remove widget or keep invisible
-                    } catch (err) {
-                        showError(`INIT FAILED: ${err.message || 'Unknown error'}`);
+            try {
+                widgetId = window.turnstile.render('#turnstile-widget', {
+                    sitekey: siteKey,
+                    callback: async (token) => {
+                        if (!mounted) return;
+                        try {
+                            await initSession(token);
+                            // Wait a bit to show the success state before hiding
+                            setTimeout(() => {
+                                if (mounted) setIsVerifying(false);
+                            }, 800);
+                        } catch (err) {
+                            showError(`INIT FAILED: ${err.message || 'Unknown error'}`);
+                        }
+                    },
+                    'error-callback': () => {
+                        if (!mounted) return;
+                        console.error("Turnstile widget error");
+                        setIsVerifying(false);
                     }
-                },
-            });
+                });
+            } catch (err) {
+                console.error("Failed to render Turnstile:", err);
+                setIsVerifying(false);
+            }
+        };
 
-            return () => {
-                if (window.turnstile) window.turnstile.remove(widgetId);
-            };
-        } else {
-            // Fallback for dev or error
-            console.warn("Turnstile not found on window");
-            initSession().catch(err => console.error(err));
-        }
+        // Poll for Turnstile script to load
+        let attempts = 0;
+        pollInterval = setInterval(() => {
+            attempts++;
+            if (window.turnstile && mounted) {
+                clearInterval(pollInterval);
+                renderTurnstile();
+            } else if (attempts >= 50) { // 5 seconds timeout
+                clearInterval(pollInterval);
+                console.warn("Turnstile script timeout");
+                if (mounted) {
+                    setIsVerifying(false);
+                    initSession().catch(err => console.error(err));
+                }
+            }
+        }, 100);
+
+        return () => {
+            mounted = false;
+            if (pollInterval) clearInterval(pollInterval);
+            if (window.turnstile && widgetId) {
+                try {
+                    window.turnstile.remove(widgetId);
+                } catch (e) {
+                    // Ignore cleanup errors
+                }
+            }
+        };
     }, [initSession, showError]);
 
     // Drag and drop handlers
@@ -111,7 +149,14 @@ function AppContent() {
 
     return (
         <div className="flex flex-col h-screen bg-grid">
-            <div id="turnstile-widget" className="fixed top-4 right-4 z-50"></div>
+            {isVerifying && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center gap-4">
+                        <div className="text-sm font-bold opacity-60">VERIFYING HUMANITY...</div>
+                        <div id="turnstile-widget"></div>
+                    </div>
+                </div>
+            )}
             <Notification notification={notification} />
             <DragDropOverlay active={dragActive} />
 

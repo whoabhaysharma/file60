@@ -16,7 +16,16 @@ export function getDownloadUrl(requestUrlObj, fileId, cdnUrl) {
 }
 
 
-export function json(d) { return new Response(JSON.stringify(d), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }); }
+export function json(d) {
+    return new Response(JSON.stringify(d), {
+        headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, x-session-token, x-turnstile-token, X-File-Name, X-File-Size, X-File-Type"
+        }
+    });
+}
 export function error(m, s) { return new Response(JSON.stringify({ error: m }), { status: s, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }); }
 export function handleOptions() {
     return new Response(null, {
