@@ -8,7 +8,7 @@ import 'codemirror/mode/htmlmixed/htmlmixed.js';
 import { CODE_MODES, MIME_TYPES } from '../utils/constants.js';
 import { useApp } from '../context/AppContext.jsx';
 
-export function CodeEditor({ onUpload }) {
+export function CodeEditor({ onUpload, isUploading, uploadProgress }) {
     const editorRef = useRef(null);
     const containerRef = useRef(null);
     const [ext, setExt] = useState('html');
@@ -84,16 +84,32 @@ export function CodeEditor({ onUpload }) {
                 </select>
             </div>
             <div ref={containerRef} className="flex-grow relative overflow-hidden bg-terminal min-h-0" />
-            <button
-                onClick={handleUpload}
-                disabled={isInitializing}
-                className={`active-press border-t-[4px] border-black py-4 font-black text-xs uppercase transition-colors shrink-0 ${!isInitializing
-                    ? 'bg-accent hover:bg-white cursor-pointer'
-                    : 'bg-gray-400 cursor-not-allowed opacity-60'
-                    }`}
-            >
-                {isInitializing ? 'INITIALIZING...' : 'SHIP IT TO PROD'}
-            </button>
+            {isUploading ? (
+                <div className="border-t-[4px] border-black py-4 px-4 bg-terminal shrink-0">
+                    <div className="text-center w-full">
+                        <div className="font-black text-xs uppercase text-accent">
+                            STEALING WIFI...
+                        </div>
+                        <div className="progress-container !mt-2 !h-4 !border-accent !bg-terminal">
+                            <div className="progress-bar !bg-accent" style={{ width: `${uploadProgress}%` }} />
+                        </div>
+                        <div className="upload-info text-accent !mt-1">
+                            <div className="font-black">{Math.round(uploadProgress)}%</div>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <button
+                    onClick={handleUpload}
+                    disabled={isInitializing}
+                    className={`active-press border-t-[4px] border-black py-4 font-black text-xs uppercase transition-colors shrink-0 ${!isInitializing
+                        ? 'bg-accent hover:bg-white cursor-pointer'
+                        : 'bg-gray-400 cursor-not-allowed opacity-60'
+                        }`}
+                >
+                    {isInitializing ? 'INITIALIZING...' : 'SHIP IT TO PROD'}
+                </button>
+            )}
         </div>
     );
 }

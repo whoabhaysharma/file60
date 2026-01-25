@@ -45,7 +45,11 @@ export const Sidebar = forwardRef(({ onFileSelect, isUploading, uploadProgress }
                 </div>
             ) : (
                 <div className="flex flex-col flex-grow min-h-0">
-                    <CodeEditor onUpload={onFileSelect} />
+                    <CodeEditor
+                        onUpload={onFileSelect}
+                        isUploading={isUploading}
+                        uploadProgress={uploadProgress}
+                    />
                 </div>
             )}
 
