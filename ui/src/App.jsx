@@ -182,7 +182,11 @@ function AppContent() {
                     )}
                     {activeMobileTab === 'code' && (
                         <div className="flex-grow flex flex-col overflow-hidden p-4">
-                            <CodeEditor onUpload={handleFileUpload} />
+                            <CodeEditor
+                                onUpload={handleFileUpload}
+                                isUploading={isUploading}
+                                uploadProgress={uploadProgress}
+                            />
                         </div>
                     )}
                 </div>
