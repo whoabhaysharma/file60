@@ -1,3 +1,0 @@
-127.0.0.1 - - [22/Jan/2026 18:06:17] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [22/Jan/2026 18:06:18] code 404, message File not found
-127.0.0.1 - - [22/Jan/2026 18:06:18] "GET /config.js HTTP/1.1" 404 -
