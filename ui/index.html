@@ -1,21 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FILE60 // SYSTEM_TERMINAL</title>
-    <!-- Cloudflare Turnstile -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
+    <title>FILE60 // Secure File Sharing</title>
+    <meta name="description" content="Secure, anonymous file sharing with self-destructing links. No sign-up required.">
+    <meta name="keywords" content="file sharing, secure file upload, anonymous file share, temp file hosting">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://file60.com/">
+    <meta property="og:title" content="FILE60 // Secure File Sharing">
+    <meta property="og:description" content="Secure, anonymous file sharing with self-destructing links. No sign-up required.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://file60.com/">
+    <meta property="twitter:title" content="FILE60 // Secure File Sharing">
+    <meta property="twitter:description" content="Secure, anonymous file sharing with self-destructing links. No sign-up required.">
+
     <link rel="icon" type="image/png" href="/favicon.png">
-    <script src="/config.js"></script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9077533953246529"
-     crossorigin="anonymous"></script>
+    <script type="module">
+        import '/src/styles/index.css'
+    </script>
 </head>
+<body class="bg-grid h-dvh flex flex-col items-center justify-center font-mono text-ink overflow-hidden selection:bg-accent selection:text-ink">
 
-<body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <main class="max-w-2xl w-full p-8 flex flex-col gap-8 relative z-10">
+        <!-- Header / Logo -->
+        <header class="border-2 border-black p-6 bg-white shadow-brutal relative">
+            <h1 class="text-4xl md:text-6xl font-bold tracking-tighter mb-2">FILE60</h1>
+            <div class="h-px w-full bg-black mb-4"></div>
+            <p class="text-xl md:text-2xl uppercase font-bold tracking-widest">System_Terminal</p>
+        </header>
+
+        <!-- Main Content Box -->
+        <div class="border-2 border-black bg-white p-6 shadow-brutal-lg relative">
+            <!-- Decorative corner markers -->
+            <div class="absolute top-2 left-2 w-2 h-2 bg-black"></div>
+            <div class="absolute top-2 right-2 w-2 h-2 bg-black"></div>
+            <div class="absolute bottom-2 left-2 w-2 h-2 bg-black"></div>
+            <div class="absolute bottom-2 right-2 w-2 h-2 bg-black"></div>
+
+            <div class="p-4 space-y-6 text-center">
+                <p class="text-lg md:text-xl font-bold leading-relaxed">
+                    SECURE. ANONYMOUS. TEMPORARY.
+                </p>
+                <p class="text-base opacity-80">
+                    Upload files securely. Links expire automatically. No traces left behind.
+                </p>
+
+                <div class="py-4">
+                    <a href="/app/" class="inline-block bg-black text-white text-xl font-bold px-8 py-4 hover:bg-accent hover:text-black transition-colors border-2 border-black shadow-brutal-sm hover:shadow-brutal hover:-translate-y-1 active:translate-y-0 active:shadow-none duration-200">
+                        ENTER_TERMINAL >
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer / Status -->
+        <footer class="text-center text-xs font-bold opacity-60 uppercase italic">
+            <p>System Status: ONLINE // Encrypted Connection</p>
+        </footer>
+    </main>
+
 </body>
-
 </html>
