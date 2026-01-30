@@ -23,13 +23,14 @@ function getS3Client(env) {
     });
 }
 
-export async function generatePresignedUrl(env, key, contentType, cacheControl) {
+export async function generatePresignedUrl(env, key, contentType, contentLength, cacheControl) {
     const S3 = getS3Client(env);
 
     const command = new PutObjectCommand({
         Bucket: env.R2_BUCKET_NAME || 'file60-files',
         Key: key,
         ContentType: contentType,
+        ContentLength: contentLength,
         CacheControl: cacheControl,
         // Optional: Enforce specific Metadata
         Metadata: {

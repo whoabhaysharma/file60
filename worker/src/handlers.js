@@ -112,7 +112,8 @@ export async function createFile(req, env, config) {
     try {
         // 1. Generate Presigned PUT URL
         // We pass the ENV to the helper because that's where the secrets live
-        uploadUrl = await generatePresignedUrl(env, objectKey, contentType, cacheControl);
+        // Enforce Content-Length in the signature to prevent size abuse
+        uploadUrl = await generatePresignedUrl(env, objectKey, contentType, fileSize, cacheControl);
     } catch (err) {
         // Fallback or Error if Keys missing
         console.error("Presign Error:", err);
