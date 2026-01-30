@@ -47,6 +47,7 @@ export function useApi() {
                 'Content-Type': file.type || 'application/octet-stream',
                 'X-File-Type': file.type || 'application/octet-stream', // Explicitly pass type for worker
                 'Content-Length': file.size.toString(),
+                'X-File-Size': file.size.toString(),
                 'X-File-Name': encodeURIComponent(file.name) // Encode to handle special chars safe in headers
             }
             // No body needed for the initial request in this flow, OR we can send empty body.
