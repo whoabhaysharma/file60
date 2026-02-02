@@ -7,9 +7,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev:worker": "wrangler dev",
-    "dev:ui": "vite ui",
-    "build:ui": "vite build ui",
-    "preview:ui": "vite preview ui",
+    "dev:ui": "vite",
+    "build:ui": "vite build",
+    "preview:ui": "vite preview",
     "dev": "echo 'Run dev:worker and dev:ui in separate terminals'",
     "deploy:worker": "wrangler deploy --minify",
     "deploy:ui": "npm run build:ui && wrangler pages deploy ui/dist --project-name file60 --branch main"
