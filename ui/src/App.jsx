@@ -119,17 +119,41 @@ function AppContent() {
 
     const handleDrop = (e) => {
         e.preventDefault();
+        e.stopPropagation();
         setDragActive(false);
         if (e.dataTransfer.files?.length) {
             handleFileUpload(e.dataTransfer.files[0]);
         }
     };
 
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActive(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Only deactivate if we're actually leaving the container
+        // (relatedTarget is null or outside the currentTarget)
+        if (e.relatedTarget === null || !e.currentTarget.contains(e.relatedTarget)) {
+            setDragActive(false);
+        }
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
     return (
         <div
             className="flex flex-col h-dvh bg-grid relative"
-            onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-            onDragLeave={() => setDragActive(false)}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
             {/* Background verification with 1.5s delay before fading out */}
