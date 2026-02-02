@@ -12,7 +12,7 @@ export default defineConfig({
     envDir: '..',
     publicDir: 'public',
     build: {
-        outDir: '../dist',
+        outDir: 'dist',
         emptyOutDir: true,
         rollupOptions: {
             input: {
