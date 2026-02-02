@@ -8,16 +8,19 @@ export const Sidebar = forwardRef(({ onFileSelect, isUploading, uploadProgress }
     return (
         <aside
             ref={ref}
-            className="sidebar w-full md:w-[480px] border-b-[4px] md:border-b-0 border-black bg-[#e5e5e5] p-6 flex flex-col shrink-0"
+            className="sidebar w-full md:w-[480px] border-b-[4px] md:border-b-0 border-white bg-black p-6 flex flex-col shrink-0"
         >
-            <h1 className="font-black text-[4rem] leading-[0.7] tracking-tighter mb-4 -skew-x-6">
-                FILE<br />60.
+            <h1 className="font-black text-[3.5rem] leading-[0.8] tracking-tighter mb-4 -skew-x-6 text-white">
+                FILE<span className="text-accent">60</span><span className="animate-pulse">_</span>
             </h1>
+            <a href="/?stay=true" className="mb-6 text-[10px] font-bold uppercase tracking-widest opacity-50 hover:opacity-100 text-white hover:text-accent transition-all">
+                &lt; SYSTEM_HOME
+            </a>
 
-            <div className="flex border-[4px] border-black mb-6 shadow-brutal bg-black shrink-0">
+            <div className="flex border-[4px] border-white mb-6 shadow-brutal bg-black shrink-0">
                 <button
                     onClick={() => setMode('upload')}
-                    className={`flex-1 py-3 font-black text-xs uppercase border-r-[4px] border-black transition-all ${mode === 'upload'
+                    className={`flex-1 py-3 font-black text-xs uppercase border-r-[4px] border-white transition-all ${mode === 'upload'
                         ? 'bg-accent text-black'
                         : 'bg-black text-white'
                         }`}

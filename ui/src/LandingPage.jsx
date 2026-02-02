@@ -1,80 +1,154 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function Landing() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    // Smart Redirect Logic
+    const isBot = /bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent);
+    const hasVisited = localStorage.getItem('file60_user_visited') === 'true';
+    const shouldStay = new URLSearchParams(window.location.search).get('stay') === 'true';
+
+    if (hasVisited && !isBot && !shouldStay) {
+      window.location.href = '/app/';
+    }
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-bg font-mono flex flex-col">
-      {/* Header */}
-      <header className="p-6 flex justify-between items-center border-b-4 border-black bg-white">
-        <h1 className="text-4xl font-black tracking-tighter -skew-x-6">FILE<br/>60.</h1>
-        <nav className="hidden md:flex gap-6 font-bold text-sm uppercase">
-          <a href="#features" className="hover:text-accent transition-colors">Features</a>
-          <a href="#privacy" className="hover:text-accent transition-colors">Privacy</a>
-          <a href="#terms" className="hover:text-accent transition-colors">Terms</a>
+    <div className="min-h-screen bg-black text-white font-mono flex flex-col selection:bg-accent selection:text-black">
+      {/* Sticky Header */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 p-6 flex justify-between items-center transition-all duration-300 border-b-4 ${scrolled ? 'bg-black/90 backdrop-blur border-accent py-4 shadow-[0_4px_0_0_rgba(0,255,65,0.3)]' : 'bg-transparent border-transparent py-6'
+          }`}
+      >
+        <h1 className="text-4xl font-black tracking-tighter -skew-x-6 text-white group cursor-default">
+          FILE<span className="text-accent">60</span><span className="animate-pulse">_</span>
+        </h1>
+        <nav className="hidden md:flex gap-8 font-bold text-sm uppercase tracking-widest">
+          {['Features', 'Privacy', 'Terms'].map((item) => (
+            <a
+              key={item}
+              href={`#${item.toLowerCase()}`}
+              className="relative hover:text-accent transition-colors before:content-['>'] before:opacity-0 hover:before:opacity-100 before:absolute before:-left-4 before:text-accent transition-all"
+            >
+              {item}
+            </a>
+          ))}
         </nav>
-        <a href="/app/" className="bg-black text-white px-6 py-2 font-black uppercase text-sm hover:bg-accent hover:text-black transition-all shadow-brutal-sm">
-          Launch Terminal
+        <a
+          href="/app/"
+          className="bg-accent text-black px-6 py-2 font-black uppercase text-sm border-2 border-accent hover:bg-black hover:text-accent transition-all shadow-[4px_4px_0_0_#ffffff] hover:shadow-[2px_2px_0_0_#ffffff] hover:translate-x-[2px] hover:translate-y-[2px]"
+        >
+          Launch_Terminal
         </a>
       </header>
 
-      {/* Hero */}
-      <section className="p-12 md:p-24 flex flex-col items-center justify-center text-center bg-grid border-b-4 border-black relative overflow-hidden">
-        <div className="scanlines absolute inset-0 pointer-events-none"></div>
-        <div className="bg-white p-8 md:p-12 border-4 border-black shadow-brutal relative z-10 max-w-4xl">
-          <h2 className="text-5xl md:text-7xl font-black uppercase mb-6 leading-[0.8]">
-            Anonymous<br/><span className="text-accent bg-black px-2">File Drop</span>
+      {/* Hero Section */}
+      <section className="min-h-screen pt-32 pb-20 px-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
+        {/* Background Grid & Effects */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,65,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,65,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)] pointer-events-none"></div>
+        <div className="scanlines absolute inset-0 pointer-events-none opacity-20"></div>
+
+        <div className="relative z-10 max-w-5xl mx-auto">
+          <div className="inline-block mb-6 px-3 py-1 border border-accent/30 text-accent/70 text-xs font-bold tracking-[0.2em] uppercase rounded-full animate-pulse">
+            System Online // V.3.0.0
+          </div>
+          <h2 className="text-6xl md:text-8xl lg:text-9xl font-black uppercase mb-8 leading-[0.8] tracking-tighter mix-blend-screen">
+            Anonymous<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-400 to-gray-600">File Drop</span>
           </h2>
-          <p className="text-xl font-bold uppercase mb-8 max-w-2xl mx-auto opacity-80">
-            Share sensitive data. No logs. No sign-up. Self-destructing files.
-            The internet never forgets, but we do.
+          <p className="text-xl md:text-2xl text-gray-400 font-bold uppercase mb-12 max-w-3xl mx-auto leading-relaxed border-l-4 border-accent pl-6 text-left md:text-center md:border-l-0 md:pl-0">
+            Share sensitive data. <span className="text-white">No logs.</span> <span className="text-white">No sign-up.</span> <span className="text-white">Self-destruct.</span><br />
+            The internet never forgets, but <span className="bg-accent text-black px-1">we do.</span>
           </p>
-          <a href="/app/" className="inline-block bg-accent text-black border-4 border-black px-8 py-4 text-xl font-black uppercase hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] shadow-brutal transition-all">
-            Start Uploading
-          </a>
-        </div>
-      </section>
 
-      {/* Features */}
-      <section id="features" className="p-12 bg-white border-b-4 border-black">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
-          <div className="border-4 border-black p-6 shadow-brutal-sm hover:shadow-brutal transition-all bg-[#e5e5e5]">
-            <h3 className="text-2xl font-black uppercase mb-4">No Logs Policy</h3>
-            <p className="font-bold text-sm opacity-70">We don't know who you are, what you uploaded, or who you sent it to. Server logs are wiped automatically.</p>
-          </div>
-          <div className="border-4 border-black p-6 shadow-brutal-sm hover:shadow-brutal transition-all bg-[#e5e5e5]">
-            <h3 className="text-2xl font-black uppercase mb-4">End-to-End Encryption</h3>
-            <p className="font-bold text-sm opacity-70">Files are encrypted in transit. We ensure your data remains your data.</p>
-          </div>
-          <div className="border-4 border-black p-6 shadow-brutal-sm hover:shadow-brutal transition-all bg-[#e5e5e5]">
-            <h3 className="text-2xl font-black uppercase mb-4">Self-Destruct</h3>
-            <p className="font-bold text-sm opacity-70">Set expiration timers. Once a file expires, it is digitally incinerated. No backups.</p>
+          <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
+            <a
+              href="/app/"
+              className="group relative inline-flex items-center justify-center px-8 py-4 text-xl font-black uppercase bg-white text-black border-4 border-white hover:bg-black hover:text-white transition-all shadow-[8px_8px_0_0_#00ff41] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]"
+            >
+              Start_Upload
+              <span className="ml-2 group-hover:animate-ping">_</span>
+            </a>
+            <a
+              href="#features"
+              className="px-8 py-4 text-sm font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors flex items-center gap-2 group"
+            >
+              System Info <span className="group-hover:translate-y-1 transition-transform">↓</span>
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Policies */}
-      <section className="grid md:grid-cols-2">
-        <div id="privacy" className="p-12 border-b-4 md:border-b-0 md:border-r-4 border-black bg-white">
-            <h3 className="text-3xl font-black uppercase mb-6">Privacy Policy</h3>
-            <div className="text-xs font-bold space-y-4 opacity-80">
-                <p><strong>1. Data Collection:</strong> We collect only the files you upload and the metadata required to serve them (file size, type, expiration). We do not collect personal information like names or emails.</p>
-                <p><strong>2. Cookies & Third Parties:</strong> We use cookies to maintain your session. Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to your website or other websites. Google's use of advertising cookies enables it and its partners to serve ads to your users based on their visit to your sites and/or other sites on the Internet. Users may opt out of personalized advertising by visiting Ads Settings.</p>
-                <p><strong>3. Data Retention:</strong> Files are automatically deleted after their expiration time. Metadata is purged simultaneously.</p>
-                <p><strong>4. Consent:</strong> By using File60, you consent to this privacy policy.</p>
-            </div>
+      {/* Features Grid */}
+      <section id="features" className="py-24 px-6 bg-zinc-900 border-t border-zinc-800 relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black border border-accent/20 px-4 py-1 text-accent text-xs font-mono uppercase tracking-widest">
+          System Capabilities
         </div>
-        <div id="terms" className="p-12 bg-white">
-            <h3 className="text-3xl font-black uppercase mb-6">Terms of Service</h3>
-            <div className="text-xs font-bold space-y-4 opacity-80">
-                <p><strong>1. Usage:</strong> You agree not to upload illegal content, including but not limited to malware, copyrighted material without permission, or CSAM. We strictly cooperate with law enforcement regarding illegal content.</p>
-                <p><strong>2. Liability:</strong> File60 is provided "as is". We are not liable for data loss or damages resulting from the use of this service.</p>
-                <p><strong>3. Termination:</strong> We reserve the right to block access or delete files that violate these terms without notice.</p>
+
+        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+          {[
+            {
+              title: "No Logs Policy",
+              desc: "We don't know who you are. Server logs are wiped automatically. Total denial.",
+              icon: "Ø"
+            },
+            {
+              title: "E2E Encryption",
+              desc: "Files are encrypted in transit. Your data remains your data until it vanishes.",
+              icon: "lock"
+            },
+            {
+              title: "Self-Destruct",
+              desc: "Set expiration timers. Once expired, data is digitally incinerated. No backups.",
+              icon: "bomb"
+            }
+          ].map((feature, i) => (
+            <div key={i} className="group p-8 border border-white/10 bg-black hover:border-accent transition-colors relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10 font-black text-6xl group-hover:text-accent group-hover:opacity-20 transition-all select-none">{feature.icon}</div>
+              <h3 className="text-2xl font-black uppercase mb-4 text-white group-hover:text-accent transition-colors flex items-center gap-3">
+                <span className="text-accent text-sm">0{i + 1}.</span> {feature.title}
+              </h3>
+              <p className="font-bold text-sm text-gray-500 leading-relaxed group-hover:text-gray-300 transition-colors">
+                {feature.desc}
+              </p>
+              <div className="absolute bottom-0 left-0 w-full h-1 bg-accent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500"></div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Policies Section */}
+      <section className="grid md:grid-cols-2 bg-black border-t border-zinc-800">
+        <div id="privacy" className="p-12 md:p-24 border-b md:border-b-0 md:border-r border-zinc-800 hover:bg-zinc-900/50 transition-colors group">
+          <h3 className="text-3xl font-black uppercase mb-8 text-white group-hover:text-accent transition-colors">Privacy_Protocol</h3>
+          <div className="text-xs font-bold space-y-6 text-gray-500 font-mono leading-loose">
+            <p><strong className="text-white block mb-1">&gt; DATA COLLECTION</strong>We collect only uploaded files & metadata (size, type). No names. No emails. No IP logging.</p>
+            <p><strong className="text-white block mb-1">&gt; COOKIES</strong>Session cookies only. Third-party vendors (Google) may use cookies for ads. Opt-out at Ads Settings.</p>
+            <p><strong className="text-white block mb-1">&gt; DATA RETENTION</strong>Auto-deletion post-expiration. Metadata purged simultaneously. Irrecoverable.</p>
+            <p><strong className="text-white block mb-1">&gt; CONSENT</strong>Use of File60 constitutes agreement to this protocol.</p>
+          </div>
+        </div>
+        <div id="terms" className="p-12 md:p-24 hover:bg-zinc-900/50 transition-colors group">
+          <h3 className="text-3xl font-black uppercase mb-8 text-white group-hover:text-alert transition-colors">Terms_of_Service</h3>
+          <div className="text-xs font-bold space-y-6 text-gray-500 font-mono leading-loose">
+            <p><strong className="text-white block mb-1">&gt; USAGE</strong>Do not upload malware, CP, or copyrighted material. Illegal content = Instant ban & report.</p>
+            <p><strong className="text-white block mb-1">&gt; LIABILITY</strong>Service provided "as is". We are not liable for data loss. Don't upload your only copy.</p>
+            <p><strong className="text-white block mb-1">&gt; TERMINATION</strong>We reserve the right to nuke files or block access at any time without notice.</p>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="p-8 bg-black text-white text-center font-bold text-xs uppercase border-t-4 border-black">
+      <footer className="p-8 bg-black text-center font-bold text-xs uppercase border-t border-zinc-800 text-gray-600 flex flex-col gap-2">
         <p>&copy; {new Date().getFullYear()} FILE60 SYSTEM. ALL RIGHTS RESERVED.</p>
+        <p className="text-[10px] opacity-50">Secure File Transfer Protocol // Encrypted</p>
       </footer>
     </div>
   );

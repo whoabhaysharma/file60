@@ -13,11 +13,10 @@ export function BottomNav({ activeTab, onTabChange }) {
                 <button
                     key={tab.id}
                     onClick={() => onTabChange(tab.id)}
-                    className={`flex-1 flex items-center justify-center transition-all border-r-[2px] border-black last:border-r-0 ${
-                        activeTab === tab.id
+                    className={`flex-1 flex items-center justify-center transition-all border-r-[2px] border-black last:border-r-0 ${activeTab === tab.id
                             ? 'bg-accent text-black'
                             : 'bg-black text-white hover:bg-white/10'
-                    }`}
+                        }`}
                 >
                     {tab.label}
                 </button>

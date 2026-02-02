@@ -129,7 +129,11 @@ function AppContent() {
         <div
             className="flex flex-col h-dvh bg-grid relative"
             onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-            onDragLeave={() => setDragActive(false)}
+            onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setDragActive(false);
+                }
+            }}
             onDrop={handleDrop}
         >
             {/* Background verification with 1.5s delay before fading out */}
@@ -149,14 +153,16 @@ function AppContent() {
 
                 <Resizer sidebarRef={sidebarRef} />
 
-                <section className="flex-grow flex flex-col overflow-hidden">
-                    <div className="flex-grow overflow-y-auto p-8 custom-scroll">
-                        <FileGrid />
+                <div className="flex-1 flex flex-col min-w-0 bg-black relative">
+                    <div className="flex-1 overflow-y-auto custom-scroll relative bg-grid">
+                        <div className="p-8 pb-32">
+                            <FileGrid />
+                        </div>
                     </div>
                     <div className="p-3 m-4 border-[2px] border-black/20 text-[10px] font-bold opacity-60 uppercase italic text-center shrink-0">
                         Your data is safe with us.
                     </div>
-                </section>
+                </div>
             </div>
 
             {/* Mobile View */}
@@ -197,6 +203,10 @@ function AppContent() {
 }
 
 export default function App() {
+    useEffect(() => {
+        localStorage.setItem('file60_user_visited', 'true');
+    }, []);
+
     return (
         <ConfigProvider>
             <AppProvider>

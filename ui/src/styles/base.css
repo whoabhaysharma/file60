@@ -1,9 +1,9 @@
 /* CSS Variables and Reset */
 :root {
     /* Colors */
-    --color-bg: #d1d1d1;
-    --color-core: #ffffff;
-    --color-ink: #000000;
+    --color-bg: #000000;
+    --color-core: #000000;
+    --color-ink: #ffffff;
     --color-accent: #00ff41;
     --color-alert: #ff2a00;
     --color-terminal: #121212;
@@ -28,7 +28,6 @@ body,
 html {
     height: 100%;
     margin: 0;
-    overflow: hidden;
     font-family: var(--font-mono);
     background-color: var(--color-bg);
 }
@@ -44,12 +43,12 @@ html {
 }
 
 .bg-diagonal-green {
-    background-color: var(--color-core);
+    background-color: #1a1a1a;
     background-image: repeating-linear-gradient(45deg,
-            rgba(0, 255, 65, 0.15) 0px,
-            rgba(0, 255, 65, 0.15) 1px,
-            transparent 1px,
-            transparent 6px);
+            rgba(0, 255, 65, 0.2) 0px,
+            rgba(0, 255, 65, 0.2) 2px,
+            transparent 2px,
+            transparent 8px);
 }
 
 .scanlines::after {

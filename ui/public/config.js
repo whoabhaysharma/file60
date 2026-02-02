@@ -11,6 +11,6 @@ window.APP_CONFIG = {
         : 'https://file60.abhaysharma-as2719.workers.dev',
     // Use test key for localhost, real key for production
     TURNSTILE_SITE_KEY: window.location.hostname === 'localhost'
-        ? '1x00000000000000000000AA'  // Test key for local dev
+        ? '0x4AAAAAACOKCe1pikeARO-o'  // Test key for local dev
         : '0x4AAAAAACOKCe1pikeARO-o'   // Real key for production
 };
