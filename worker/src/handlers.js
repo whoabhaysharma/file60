@@ -27,7 +27,7 @@ export async function createSession(req, env, config) {
     // Construct Cookie Header
     // Secure is important for prod (https), but localhost might need handling if not using https locally.
     // Usually on localhost/miniflare, Secure cookies are ignored or treated okay if on localhost.
-    const cookie = `file60_session=${token}; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=86400`;
+    const cookie = `file60_session=${token}; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=86400; Partitioned`;
 
     return json({
         config: {
