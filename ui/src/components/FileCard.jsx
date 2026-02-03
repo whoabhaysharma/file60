@@ -50,8 +50,8 @@ export function FileCard({ file, onRemove }) {
     const ext = file.name.split('.').pop();
 
     return (
-        <div className="bg-white border-[4px] border-black shadow-brutal p-5 flex flex-col gap-5">
-            <div className="relative aspect-video bg-black border-[3px] border-black overflow-hidden scanlines flex items-center justify-center">
+        <div className="bg-white border-[6px] border-black shadow-brutal p-5 flex flex-col gap-5">
+            <div className="relative aspect-video bg-black border-[4px] border-black overflow-hidden scanlines flex items-center justify-center">
                 <div className="absolute top-3 left-3 z-10 bg-accent border-[2px] border-black px-2 py-0.5 text-xs font-black uppercase text-black">
                     {ext}
                 </div>
@@ -66,18 +66,18 @@ export function FileCard({ file, onRemove }) {
             <div className="flex gap-3">
                 <button
                     onClick={handleCopy}
-                    className="active-press flex-grow bg-accent text-black border-[3px] border-black py-4 font-black text-sm shadow-brutal-sm uppercase"
+                    className="active-press flex-grow bg-accent text-black border-[4px] border-black py-4 font-black text-sm shadow-brutal-sm uppercase"
                 >
                     COPY LINK
                 </button>
                 <button
                     onClick={() => onRemove(file.id)}
-                    className="active-press bg-alert text-white border-[3px] border-black px-6 py-4 font-black shadow-brutal-sm"
+                    className="active-press bg-alert text-white border-[4px] border-black px-6 py-4 font-black shadow-brutal-sm"
                 >
                     ×
                 </button>
             </div>
-            <div className="border-[3px] border-black h-6 bg-[#eee] relative overflow-hidden">
+            <div className="border-[4px] border-black h-6 bg-[#eee] relative overflow-hidden">
                 <div
                     className="h-full bg-black transition-all duration-1000"
                     style={{ width: `${timePercentage}%` }}

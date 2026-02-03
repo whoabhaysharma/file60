@@ -1,7 +1,21 @@
 import { SignJWT, jwtVerify } from 'jose';
 
 export async function withAuth(req, env, ctx, config, handler) {
-    const token = req.headers.get("x-session-token");
+    let token = req.headers.get("x-session-token");
+
+    // Try cookie if header not present
+    if (!token) {
+        const cookieHeader = req.headers.get("Cookie");
+        if (cookieHeader) {
+            const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+                const [name, value] = cookie.trim().split('=');
+                acc[name] = value;
+                return acc;
+            }, {});
+            token = cookies['file60_session'];
+        }
+    }
+
     if (!token) throw { message: "Missing session token", status: 401 };
 
     const secret = env.JWT_SECRET;

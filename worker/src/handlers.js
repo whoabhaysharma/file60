@@ -1,9 +1,14 @@
-import { json, error, verifyTurnstile } from './utils.js';
+import { json, error, verifyTurnstile, corsHeaders, getAllowedOrigin } from './utils.js';
 import { createJWT } from './auth.js';
 
-export async function initSession(req, env, config) {
+export async function createSession(req, env, config) {
     const turnstileToken = req.headers.get("x-turnstile-token");
     const ip = req.headers.get("CF-Connecting-IP");
+
+    // DEBUG
+    console.log("Turnstile Secret exists:", !!env.TURNSTILE_SECRET_KEY, "Length:", env.TURNSTILE_SECRET_KEY?.length);
+    console.log("Turnstile Site Key (expected): 1x0000000000000000000000000000000AA");
+
 
     if (!turnstileToken) {
         // Optional: Allow bypassing in dev if needed, or fail hard.
@@ -18,13 +23,20 @@ export async function initSession(req, env, config) {
 
     const now = Math.floor(Date.now() / 1000);
     const token = await createJWT({ iat: now, exp: now + 86400 }, env.JWT_SECRET);
+
+    // Construct Cookie Header
+    // Secure is important for prod (https), but localhost might need handling if not using https locally.
+    // Usually on localhost/miniflare, Secure cookies are ignored or treated okay if on localhost.
+    const cookie = `file60_session=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=86400`;
+
     return json({
-        token,
         config: {
             maxFileSize: config.MAX_FILE_SIZE,
             maxFileSizeMB: Math.round(config.MAX_FILE_SIZE / (1024 * 1024) * 10) / 10,
             expiryHours: config.EXPIRY_MS / (60 * 60 * 1000)
         }
+    }, req, {
+        "Set-Cookie": cookie
     });
 }
 
@@ -141,7 +153,7 @@ export async function createFile(req, env, config) {
         expires_at: expiryTimestamp,
         expires_at_iso: new Date(expiryTimestamp).toISOString(),
         created_at: now
-    });
+    }, req);
 }
 
 export async function getFile(req, env) {

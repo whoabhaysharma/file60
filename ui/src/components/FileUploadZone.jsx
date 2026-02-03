@@ -22,14 +22,14 @@ export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
     return (
         <div
             onClick={handleClick}
-            className={`flex-grow min-h-[200px] border-[4px] border-white ${isInitializing
+            className={`flex-grow min-h-[200px] border-[6px] border-white ${isInitializing
                 ? 'bg-gray-300 cursor-wait opacity-80'
                 : 'bg-diagonal-green hover:bg-accent cursor-crosshair'
                 } transition-all flex flex-col justify-center items-center p-8 relative group shadow-brutal`}
         >
             {isInitializing ? (
                 <div className="text-center">
-                    <div className="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal">
+                    <div className="font-black text-2xl uppercase border-[6px] border-black bg-white px-6 py-3 shadow-brutal">
                         INITIALIZING...
                     </div>
                     <p className="mt-4 text-[10px] font-bold opacity-60">
@@ -38,7 +38,7 @@ export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
                 </div>
             ) : isUploading ? (
                 <div className="text-center w-full">
-                    <div className="font-black text-2xl uppercase border-[4px] border-black bg-accent px-6 py-3">
+                    <div className="font-black text-2xl uppercase border-[6px] border-black bg-accent px-6 py-3">
                         STEALING WIFI...
                     </div>
                     <div className="progress-container">
@@ -50,7 +50,7 @@ export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
                 </div>
             ) : (
                 <div className="text-center">
-                    <div className="font-black text-2xl uppercase border-[4px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">
+                    <div className="font-black text-2xl uppercase border-[6px] border-black bg-white px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">
                         FEED ME FILES
                     </div>
                     <p className="mt-6 text-[10px] font-bold tracking-widest leading-relaxed text-white">

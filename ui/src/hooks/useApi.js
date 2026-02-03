@@ -9,6 +9,23 @@ export function useApi() {
     const { setSessionToken, setSessionReady } = useApp();
     const { apiUrl, updateServerConfig } = useConfig();
 
+    const checkSession = useCallback(async () => {
+        try {
+            const response = await fetch(`${apiUrl}/api/session`, {
+                credentials: 'include'
+            });
+            if (response.status === 200) {
+                const data = await response.json();
+                setSessionToken(true);
+                if (data.config) updateServerConfig(data.config);
+                return true;
+            }
+            return false;
+        } catch (e) {
+            return false;
+        }
+    }, [apiUrl, setSessionToken, updateServerConfig]);
+
     const initSession = useCallback(async (turnstileToken) => {
         try {
             if (!apiUrl) {
@@ -16,7 +33,9 @@ export function useApi() {
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/api/init-session`, {
+            const response = await fetch(`${apiUrl}/api/session`, {
+                method: 'POST',
+                credentials: 'include',
                 headers: {
                     'x-turnstile-token': turnstileToken || ''
                 }
@@ -26,11 +45,11 @@ export function useApi() {
                 throw new Error('Failed to initialize session');
             }
 
+            // Cookie is set automatically by the browser from Set-Cookie header
             const data = await response.json();
-            setSessionToken(data.token);
-            updateServerConfig(data.config);
-            setSessionReady(true); // Mark session as ready for file uploads
-
+            setSessionToken(true); // Mark as authenticated
+            if (data.config) updateServerConfig(data.config);
+            setSessionReady(true);
             return data;
         } catch (error) {
             console.error('Init session error:', error);
@@ -38,24 +57,19 @@ export function useApi() {
         }
     }, [apiUrl, setSessionToken, setSessionReady, updateServerConfig]);
 
-    const uploadFile = useCallback(async (file, sessionToken) => {
+    const uploadFile = useCallback(async (file) => {
         // This is now just a metadata request to get the Presigned URL
+        // Cookie is sent automatically
         const response = await fetch(`${apiUrl}/api/create-file`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'x-session-token': sessionToken,
                 'Content-Type': file.type || 'application/octet-stream',
-                'X-File-Type': file.type || 'application/octet-stream', // Explicitly pass type for worker
+                'X-File-Type': file.type || 'application/octet-stream',
                 'Content-Length': file.size.toString(),
                 'X-File-Size': file.size.toString(),
-                'X-File-Name': encodeURIComponent(file.name) // Encode to handle special chars safe in headers
+                'X-File-Name': encodeURIComponent(file.name)
             }
-            // No body needed for the initial request in this flow, OR we can send empty body.
-            // But standard practice for "starting an upload" is often to just send metadata.
-            // HOWEVER, our current Worker expects a POST.
-            // If I change the worker to NOT expect a body, that's fine.
-            // But the Worker currently doesn't read the body in the new `createFile` handler (it generates URL).
-            // So we can send an empty body or just null.
         });
 
         if (!response.ok) {
@@ -67,6 +81,7 @@ export function useApi() {
 
     return {
         initSession,
-        uploadFile
+        uploadFile,
+        checkSession
     };
 }

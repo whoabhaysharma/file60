@@ -29,8 +29,9 @@ export function AppProvider({ children }) {
         return [];
     });
 
+    const [sessionToken, setSessionToken] = useState(null); // Now acts as "isAuthenticated" flag or holds dummy value
+
     const [isUploading, setIsUploading] = useState(false);
-    const [sessionToken, setSessionToken] = useState(null);
     const [sessionReady, setSessionReady] = useState(false);
     const [isInitializing, setIsInitializing] = useState(false);
     const [initializeSession, setInitializeSession] = useState(() => null);

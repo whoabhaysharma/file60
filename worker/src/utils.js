@@ -16,24 +16,55 @@ export function getDownloadUrl(requestUrlObj, fileId, cdnUrl) {
 }
 
 
-export function json(d) {
+// Helper to get allowed origin
+export const getAllowedOrigin = (requestOrigin) => {
+    // Modify this list based on your needs
+    const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://file60.pages.dev',
+        'https://file60.com'
+    ];
+    // Also allow any localhost port for dev flexibility if needed, or stick to specific list
+    if (requestOrigin && (allowedOrigins.includes(requestOrigin) || requestOrigin.startsWith('http://localhost:'))) {
+        return requestOrigin;
+    }
+    return 'null'; // Fail safe
+};
+
+export const corsHeaders = (origin) => ({
+    "Access-Control-Allow-Origin": origin || "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT",
+    "Access-Control-Allow-Headers": "Content-Type, x-session-token, x-turnstile-token, X-File-Name, X-File-Size, X-File-Type, Cookie",
+    "Access-Control-Allow-Credentials": "true"
+});
+
+export function json(d, req, extraHeaders = {}) {
+    const origin = req?.headers.get("Origin");
     return new Response(JSON.stringify(d), {
         headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, x-session-token, x-turnstile-token, X-File-Name, X-File-Size, X-File-Type"
+            ...corsHeaders(getAllowedOrigin(origin)),
+            ...extraHeaders
         }
     });
 }
-export function error(m, s) { return new Response(JSON.stringify({ error: m }), { status: s, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }); }
-export function handleOptions() {
-    return new Response(null, {
+
+export function error(m, s, req) {
+    const origin = req?.headers.get("Origin");
+    return new Response(JSON.stringify({ error: m }), {
+        status: s,
         headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT",
-            "Access-Control-Allow-Headers": "Content-Type, x-session-token, X-File-Name, X-File-Size, X-File-Type, x-turnstile-token",
+            "Content-Type": "application/json",
+            ...corsHeaders(getAllowedOrigin(origin))
         }
+    });
+}
+
+export function handleOptions(req) {
+    const origin = req.headers.get("Origin");
+    return new Response(null, {
+        headers: corsHeaders(getAllowedOrigin(origin))
     });
 }
 

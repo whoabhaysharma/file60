@@ -28,9 +28,19 @@ export function ConfigProvider({ children }) {
 
     const updateServerConfig = React.useCallback((config) => {
         if (config) {
-            setServerConfig({
-                maxFileSize: config.maxFileSize || DEFAULT_CONFIG.maxFileSize,
-                maxFileSizeMB: config.maxFileSizeMB || DEFAULT_CONFIG.maxFileSizeMB
+            setServerConfig(prev => {
+                const newMaxFileSize = config.maxFileSize || DEFAULT_CONFIG.maxFileSize;
+                const newMaxFileSizeMB = config.maxFileSizeMB || DEFAULT_CONFIG.maxFileSizeMB;
+
+                // Only update if changed
+                if (prev.maxFileSize === newMaxFileSize && prev.maxFileSizeMB === newMaxFileSizeMB) {
+                    return prev;
+                }
+
+                return {
+                    maxFileSize: newMaxFileSize,
+                    maxFileSizeMB: newMaxFileSizeMB
+                };
             });
         }
     }, []);

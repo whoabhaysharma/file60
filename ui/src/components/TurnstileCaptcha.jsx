@@ -1,3 +1,5 @@
+import React, { useEffect, useRef } from 'react';
+
 /**
  * Sub-component for the Turnstile Widget
  * Handles initialization and cleanup properly via Refs

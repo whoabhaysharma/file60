@@ -1,17 +1,17 @@
 /* CSS Variables and Reset */
 :root {
     /* Colors */
-    --color-bg: #000000;
-    --color-core: #000000;
+    --color-bg: #0a0a0a;
+    --color-core: #0a0a0a;
     --color-ink: #ffffff;
     --color-accent: #00ff41;
     --color-alert: #ff2a00;
-    --color-terminal: #121212;
+    --color-terminal: #1a1a1a;
 
-    /* Shadows */
-    --shadow-brutal: 8px 8px 0px 0px #000;
-    --shadow-brutal-sm: 4px 4px 0px 0px #000;
-    --shadow-brutal-lg: 12px 12px 0px 0px #000;
+    /* Shadows - White for brutalist effect */
+    --shadow-brutal: 8px 8px 0px 0px #ffffff;
+    --shadow-brutal-sm: 4px 4px 0px 0px #ffffff;
+    --shadow-brutal-lg: 12px 12px 0px 0px #ffffff;
 
     /* Typography */
     --font-mono: 'Courier Prime', monospace;

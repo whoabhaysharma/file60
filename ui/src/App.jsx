@@ -14,77 +14,15 @@ import { FileUploadZone } from './components/FileUploadZone.jsx';
 import { CodeEditor } from './components/CodeEditor.jsx';
 import { MobileHeader } from './components/MobileHeader.jsx';
 import { BottomNav } from './components/BottomNav.jsx';
+import TurnstileCaptcha from './components/TurnstileCaptcha.jsx';
 import './styles/index.css';
 
-/**
- * Turnstile Component
- * Features: Immediate load, Success animation delay, and Auto-hide logic.
- */
-const TurnstileCaptcha = ({ onVerify }) => {
-    const containerRef = useRef(null);
-    const widgetIdRef = useRef(null);
-    const [isVisible, setIsVisible] = useState(true);
-
-    const renderWidget = useCallback(() => {
-        const siteKey = (window.APP_CONFIG && window.APP_CONFIG.TURNSTILE_SITE_KEY) || import.meta.env.VITE_TURNSTILE_SITE_KEY;
-
-        if (window.turnstile && containerRef.current && !widgetIdRef.current) {
-            widgetIdRef.current = window.turnstile.render(containerRef.current, {
-                sitekey: siteKey,
-                theme: 'light',
-                callback: (token) => {
-                    onVerify(token);
-                    // Delay the removal so the user sees the "Success" animation
-                    setTimeout(() => {
-                        setIsVisible(false);
-                    }, 1500);
-                },
-                'expired-callback': () => {
-                    onVerify(null);
-                    setIsVisible(true);
-                    window.turnstile.reset(widgetIdRef.current);
-                },
-                'error-callback': () => {
-                    onVerify(null);
-                    setIsVisible(true);
-                },
-            });
-        }
-    }, [onVerify]);
-
-    useEffect(() => {
-        if (window.turnstile) {
-            renderWidget();
-        } else {
-            window.onloadTurnstileCallback = renderWidget;
-        }
-
-        return () => {
-            if (widgetIdRef.current && window.turnstile) {
-                window.turnstile.remove(widgetIdRef.current);
-                widgetIdRef.current = null;
-            }
-        };
-    }, [renderWidget]);
-
-    return (
-        <div
-            className={`fixed bottom-6 right-6 z-[9999] transition-all duration-700 ease-in-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-                }`}
-        >
-            <div ref={containerRef} className="shadow-2xl rounded-lg overflow-hidden" />
-        </div>
-    );
-};
-
 function AppContent() {
-    const { initSession } = useApi();
     const { showError, showSuccess, notification } = useNotification();
     const { uploadFile, isUploading, uploadProgress } = useFileUpload(showSuccess, showError);
-    const { setIsInitializing, sessionToken } = useApp(); // Destructure sessionToken and setIsInitializing
+    const { sessionToken } = useApp();
     useLocalStorage();
 
-    const [turnstileToken, setTurnstileToken] = useState(null);
     const [dragActive, setDragActive] = useState(false);
     const sidebarRef = useRef(null);
     const [activeMobileTab, setActiveMobileTab] = useState('files');
@@ -92,30 +30,16 @@ function AppContent() {
     const handleFileUpload = useCallback(async (file) => {
         if (!file) return;
 
-        // If we don't have a session AND don't have a captcha response, we can't proceed
-        if (!sessionToken && !turnstileToken) {
-            showError("Security check in progress. Please wait.");
-            return;
-        }
-
         try {
-            let tokenToUse = sessionToken;
-
-            // Only initialize if we don't have a session yet
-            if (!tokenToUse) {
-                setIsInitializing(true);
-                const sessionData = await initSession(turnstileToken);
-                tokenToUse = sessionData.token;
-                setIsInitializing(false);
+            if (!sessionToken) {
+                showError("Session expired. Please refresh.");
+                return;
             }
-
-            await uploadFile(file, tokenToUse);
+            await uploadFile(file, sessionToken);
         } catch (err) {
             showError(err.message || "Upload failed");
-        } finally {
-            setIsInitializing(false);
         }
-    }, [turnstileToken, sessionToken, initSession, uploadFile, setIsInitializing, showError]);
+    }, [sessionToken, uploadFile, showError]);
 
     const handleDrop = (e) => {
         e.preventDefault();
@@ -124,28 +48,6 @@ function AppContent() {
         if (e.dataTransfer.files?.length) {
             handleFileUpload(e.dataTransfer.files[0]);
         }
-    };
-
-    const handleDragEnter = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragActive(true);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Only deactivate if we're actually leaving the container
-        // (relatedTarget is null or outside the currentTarget)
-        if (e.relatedTarget === null || !e.currentTarget.contains(e.relatedTarget)) {
-            setDragActive(false);
-        }
-    };
-
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
     };
 
     return (
@@ -159,9 +61,6 @@ function AppContent() {
             }}
             onDrop={handleDrop}
         >
-            {/* Background verification with 1.5s delay before fading out */}
-            <TurnstileCaptcha onVerify={setTurnstileToken} />
-
             <Notification notification={notification} />
             <DragDropOverlay active={dragActive} />
 
@@ -176,7 +75,7 @@ function AppContent() {
 
                 <Resizer sidebarRef={sidebarRef} />
 
-                <div className="flex-1 flex flex-col min-w-0 bg-black relative">
+                <div className="flex-1 flex flex-col min-w-0 bg-bg relative">
                     <div className="flex-1 overflow-y-auto custom-scroll relative bg-grid">
                         <div className="p-8 pb-32">
                             <FileGrid />
@@ -225,6 +124,64 @@ function AppContent() {
     );
 }
 
+function Gatekeeper() {
+    const { sessionToken, setIsInitializing } = useApp();
+    const { initSession, checkSession } = useApi();
+    const [turnstileVerified, setTurnstileVerified] = useState(false);
+    const [checkingAuth, setCheckingAuth] = useState(true);
+
+    // Initial session check
+    useEffect(() => {
+        const verify = async () => {
+            setCheckingAuth(true);
+            await checkSession();
+            setCheckingAuth(false);
+        };
+        verify();
+    }, [checkSession]);
+
+    // If still checking, show nothing or loading state
+    if (checkingAuth) return null;
+
+    // If authenticated (sessionToken is true), show app
+    if (sessionToken) {
+        return <AppContent />;
+    }
+
+    // Handle verification success
+    const handleVerify = (token) => {
+        if (token) {
+            setTimeout(async () => {
+                try {
+                    setTurnstileVerified(true);
+                    setIsInitializing(true);
+                    await initSession(token);
+                } catch (error) {
+                    console.error("Session initialization failed:", error);
+                    setTurnstileVerified(false);
+                } finally {
+                    setIsInitializing(false);
+                }
+            }, 1500);
+        }
+    };
+
+    return (
+        <div className="h-screen w-screen flex flex-col items-center justify-center bg-bg text-text">
+            <div className="mb-8 text-center">
+                <h1 className="text-2xl font-bold mb-2 text-white">File60</h1>
+                <p className="text-gray-300">Verifying you are human. This may take a few seconds.</p>
+            </div>
+            <div className="bg-white p-4 rounded shadow-sm">
+                <TurnstileCaptcha onVerify={handleVerify} />
+            </div>
+            <div className="mt-8 text-center max-w-md text-sm text-gray-400 px-4">
+                File60 needs to review the security of your connection before proceeding.
+            </div>
+        </div>
+    );
+}
+
 export default function App() {
     useEffect(() => {
         localStorage.setItem('file60_user_visited', 'true');
@@ -233,8 +190,10 @@ export default function App() {
     return (
         <ConfigProvider>
             <AppProvider>
-                <AppContent />
+                <Gatekeeper />
             </AppProvider>
         </ConfigProvider>
     );
 }
+
+
