@@ -4,14 +4,8 @@ export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    // Smart Redirect Logic
-    const isBot = /bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent);
-    const hasVisited = localStorage.getItem('file60_user_visited') === 'true';
-    const shouldStay = new URLSearchParams(window.location.search).get('stay') === 'true';
-
-    if (hasVisited && !isBot && !shouldStay) {
-      window.location.href = '/app/';
-    }
+    // Smart Redirect Logic Removed by user request
+    // Users must explicitly click "Launch Terminal" to go to the app.
 
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
@@ -31,15 +25,8 @@ export default function Landing() {
           FILE<span className="text-accent">60</span><span className="animate-pulse">_</span>
         </h1>
         <nav className="hidden md:flex gap-8 font-bold text-sm uppercase tracking-widest">
-          {['Features', 'Privacy', 'Terms'].map((item) => (
-            <a
-              key={item}
-              href={`#${item.toLowerCase()}`}
-              className="relative hover:text-accent transition-colors before:content-['>'] before:opacity-0 hover:before:opacity-100 before:absolute before:-left-4 before:text-accent transition-all"
-            >
-              {item}
-            </a>
-          ))}
+          <a href="/terms/" className="relative hover:text-accent transition-colors before:content-['>'] before:opacity-0 hover:before:opacity-100 before:absolute before:-left-4 before:text-accent transition-all">Terms</a>
+          <a href="/privacy/" className="relative hover:text-accent transition-colors before:content-['>'] before:opacity-0 hover:before:opacity-100 before:absolute before:-left-4 before:text-accent transition-all">Privacy</a>
         </nav>
         <a
           href="/app/"
@@ -59,13 +46,13 @@ export default function Landing() {
           <div className="inline-block mb-6 px-3 py-1 border border-accent/30 text-accent/70 text-xs font-bold tracking-[0.2em] uppercase rounded-full animate-pulse">
             System Online // V.3.0.0
           </div>
-          <h2 className="text-6xl md:text-8xl lg:text-9xl font-black uppercase mb-8 leading-[0.8] tracking-tighter mix-blend-screen">
-            Anonymous<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-400 to-gray-600">File Drop</span>
+          <h2 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase mb-8 leading-[0.9] tracking-tighter mix-blend-screen">
+            The 60 Minute<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-400 to-gray-600">File Dump</span>
           </h2>
           <p className="text-xl md:text-2xl text-gray-400 font-bold uppercase mb-12 max-w-3xl mx-auto leading-relaxed border-l-4 border-accent pl-6 text-left md:text-center md:border-l-0 md:pl-0">
-            Share sensitive data. <span className="text-white">No logs.</span> <span className="text-white">No sign-up.</span> <span className="text-white">Self-destruct.</span><br />
-            The internet never forgets, but <span className="bg-accent text-black px-1">we do.</span>
+            Share Images, Videos, Code. <span className="text-white">Up to 100MB.</span> <span className="text-white">Any File Type.</span><br />
+            Files hosted for <span className="text-accent underline decoration-4 decoration-accent/30 underline-offset-4">60 minutes</span>, then <span className="bg-accent text-black px-1">destroyed forever.</span>
           </p>
 
           <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
@@ -95,19 +82,19 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
           {[
             {
-              title: "No Logs Policy",
-              desc: "We don't know who you are. Server logs are wiped automatically. Total denial.",
+              title: "No Sign-up",
+              desc: "Instant access. No accounts, no tracking, no friction.",
               icon: "Ø"
             },
             {
-              title: "E2E Encryption",
-              desc: "Files are encrypted in transit. Your data remains your data until it vanishes.",
-              icon: "lock"
+              title: "100MB Limit",
+              desc: "Support for larger files including high-res images and short videos.",
+              icon: "100"
             },
             {
-              title: "Self-Destruct",
-              desc: "Set expiration timers. Once expired, data is digitally incinerated. No backups.",
-              icon: "bomb"
+              title: "Built-in Editor",
+              desc: "Write and share HTML, CSS, JS, and TXT directly from the browser.",
+              icon: "code"
             }
           ].map((feature, i) => (
             <div key={i} className="group p-8 border border-white/10 bg-black hover:border-accent transition-colors relative overflow-hidden">
@@ -127,28 +114,35 @@ export default function Landing() {
       {/* Policies Section */}
       <section className="grid md:grid-cols-2 bg-black border-t border-zinc-800">
         <div id="privacy" className="p-12 md:p-24 border-b md:border-b-0 md:border-r border-zinc-800 hover:bg-zinc-900/50 transition-colors group">
-          <h3 className="text-3xl font-black uppercase mb-8 text-white group-hover:text-accent transition-colors">Privacy_Protocol</h3>
+          <h3 className="text-3xl font-black uppercase mb-8 text-white group-hover:text-accent transition-colors">Use Cases</h3>
           <div className="text-xs font-bold space-y-6 text-gray-500 font-mono leading-loose">
-            <p><strong className="text-white block mb-1">&gt; DATA COLLECTION</strong>We collect only uploaded files & metadata (size, type). No names. No emails. No IP logging.</p>
-            <p><strong className="text-white block mb-1">&gt; COOKIES</strong>Session cookies only. Third-party vendors (Google) may use cookies for ads. Opt-out at Ads Settings.</p>
-            <p><strong className="text-white block mb-1">&gt; DATA RETENTION</strong>Auto-deletion post-expiration. Metadata purged simultaneously. Irrecoverable.</p>
-            <p><strong className="text-white block mb-1">&gt; CONSENT</strong>Use of File60 constitutes agreement to this protocol.</p>
+            <p><strong className="text-white block mb-1">&gt; QUICK SHARE</strong>Transfer files between devices without logins.</p>
+            <p><strong className="text-white block mb-1">&gt; CODE SNIPPETS</strong>Share debug logs or config files instantly.</p>
+            <p><strong className="text-white block mb-1">&gt; TEMPORARY HOSTING</strong>Preview HTML/CSS sites for clients.</p>
           </div>
         </div>
         <div id="terms" className="p-12 md:p-24 hover:bg-zinc-900/50 transition-colors group">
-          <h3 className="text-3xl font-black uppercase mb-8 text-white group-hover:text-alert transition-colors">Terms_of_Service</h3>
+          <h3 className="text-3xl font-black uppercase mb-8 text-white group-hover:text-alert transition-colors">Limitations</h3>
           <div className="text-xs font-bold space-y-6 text-gray-500 font-mono leading-loose">
-            <p><strong className="text-white block mb-1">&gt; USAGE</strong>Do not upload malware, CP, or copyrighted material. Illegal content = Instant ban & report.</p>
-            <p><strong className="text-white block mb-1">&gt; LIABILITY</strong>Service provided "as is". We are not liable for data loss. Don't upload your only copy.</p>
-            <p><strong className="text-white block mb-1">&gt; TERMINATION</strong>We reserve the right to nuke files or block access at any time without notice.</p>
+            <p><strong className="text-white block mb-1">&gt; 100MB MAX</strong>Files larger than 100MB will be rejected.</p>
+            <p><strong className="text-white block mb-1">&gt; 60 MINUTES</strong>Strict 1 hour retention. Backup your data.</p>
+            <p><strong className="text-white block mb-1">&gt; PUBLIC ACCESS</strong>Anyone with the link can view the file.</p>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="p-8 bg-black text-center font-bold text-xs uppercase border-t border-zinc-800 text-gray-600 flex flex-col gap-2">
-        <p>&copy; {new Date().getFullYear()} FILE60 SYSTEM. ALL RIGHTS RESERVED.</p>
-        <p className="text-[10px] opacity-50">Secure File Transfer Protocol // Encrypted</p>
+      <footer className="p-12 bg-black text-center font-bold text-xs uppercase border-t border-zinc-800 text-gray-600 flex flex-col gap-6">
+        <div className="flex flex-wrap justify-center gap-8 text-gray-400">
+          <a href="/terms/" className="hover:text-accent transition-colors">Terms of Service</a>
+          <a href="/privacy/" className="hover:text-accent transition-colors">Privacy Policy</a>
+          <a href="/dmca/" className="hover:text-accent transition-colors">DMCA</a>
+          <a href="/abuse/" className="hover:text-accent transition-colors">Report Abuse</a>
+        </div>
+        <div>
+          <p className="mb-2">&copy; {new Date().getFullYear()} FILE60 SYSTEM.</p>
+          <p className="text-[10px] opacity-50">Temporary File Hosting // Auto-Delete Enabled</p>
+        </div>
       </footer>
     </div>
   );

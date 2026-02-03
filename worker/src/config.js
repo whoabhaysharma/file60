@@ -4,9 +4,9 @@ export function getConfig(env) {
         R2_PUBLIC_URL: env.R2_PUBLIC_URL || "", // Default to empty, allowing fallback
 
         // Limits & Quotas
-        MAX_FILE_SIZE: parseInt(env.MAX_FILE_SIZE) || 10 * 1024 * 1024, // 10MB
+        MAX_FILE_SIZE: parseInt(env.MAX_FILE_SIZE) || 100 * 1024 * 1024, // 100MB
         RATE_LIMIT_HITS: parseInt(env.RATE_LIMIT_HITS) || 20,
-        EXPIRY_MS: parseInt(env.EXPIRY_MS) || 3600000, // 1 hour
+        EXPIRY_MS: parseInt(env.EXPIRY_MS) || 60 * 60 * 1000, // 60 minutes
 
         // Storage
         BUCKET_NAME: env.R2_BUCKET_NAME || 'file60-files',
