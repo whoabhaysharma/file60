@@ -20,7 +20,7 @@ export function AdsDisclaimerModal() {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="bg-bg border-[6px] border-ink shadow-brutal p-8 max-w-md w-full relative flex flex-col gap-6 animate-in slide-in-from-bottom-8 duration-500">
                 {/* Header */}
                 <div className="border-b-[4px] border-ink pb-4">
