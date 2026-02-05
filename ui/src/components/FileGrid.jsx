@@ -7,11 +7,9 @@ export function FileGrid() {
 
     if (files.length === 0) {
         return (
-            <div className="h-full flex items-center justify-center flex-col p-8 opacity-50 select-none">
-                <div className="text-[4rem] md:text-[6rem] font-black text-ink/10 -rotate-12 leading-[0.8]">
-                    VOID
-                </div>
-                <div className="text-xl font-bold text-ink mt-8 border-[2px] border-ink px-4 py-2 uppercase bg-bg z-10">
+            <div className="flex-grow flex items-center justify-center flex-col p-8 opacity-30 select-none">
+
+                <div className="text-xl font-bold text-ink mt-8 px-4 py-2 uppercase z-10">
                     No Files Detected
                 </div>
             </div>

@@ -16,6 +16,7 @@ import { MobileHeader } from './components/MobileHeader.jsx';
 import { BottomNav } from './components/BottomNav.jsx';
 import { AdsDisclaimerModal } from './components/AdsDisclaimerModal.jsx';
 import TurnstileCaptcha from './components/TurnstileCaptcha.jsx';
+import { AdBanner } from './components/AdBanner.jsx';
 import './styles/index.css';
 
 function AppContent() {
@@ -79,13 +80,12 @@ function AppContent() {
 
                 <div className="flex-1 flex flex-col min-w-0 bg-bg relative">
                     <div className="flex-1 overflow-y-auto custom-scroll relative bg-grid">
-                        <div className="p-8 pb-32">
+                        <div className="p-8 pb-32 min-h-full flex flex-col">
                             <FileGrid />
+
                         </div>
                     </div>
-                    <div className="p-3 m-4 border-[2px] border-ink/20 text-[10px] font-bold opacity-60 uppercase italic text-center shrink-0">
-                        Your data is safe with us.
-                    </div>
+                    <AdBanner />
                 </div>
             </div>
 
@@ -96,9 +96,7 @@ function AppContent() {
                     {activeMobileTab === 'files' && (
                         <div className="flex-grow overflow-y-auto p-4 custom-scroll">
                             <FileGrid />
-                            <div className="p-3 m-4 border-[2px] border-ink/20 text-[10px] font-bold opacity-60 uppercase italic text-center shrink-0">
-                                Your data is safe with us.
-                            </div>
+                            <AdBanner />
                         </div>
                     )}
                     {activeMobileTab === 'upload' && (
