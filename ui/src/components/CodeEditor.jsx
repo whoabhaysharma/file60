@@ -64,7 +64,7 @@ export function CodeEditor({ onUpload, isUploading, uploadProgress }) {
     };
 
     return (
-        <div className="flex-grow border-[4px] border-black bg-terminal shadow-brutal flex flex-col overflow-hidden h-full">
+        <div className="flex-grow border-[4px] border-ink bg-terminal flex flex-col overflow-hidden h-full">
             <div className="bg-black border-b-[2px] border-white/10 p-2 flex justify-between items-center shrink-0">
                 <div className="flex gap-1.5 px-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-alert" />
@@ -74,7 +74,7 @@ export function CodeEditor({ onUpload, isUploading, uploadProgress }) {
                 <select
                     value={ext}
                     onChange={(e) => setExt(e.target.value)}
-                    className="bg-terminal text-accent text-[9px] border-[1px] border-accent/50 px-2 py-0.5 uppercase font-bold outline-none"
+                    className="bg-black text-accent text-[9px] border-[1px] border-accent/50 px-2 py-0.5 uppercase font-bold outline-none cursor-pointer"
                     disabled={isInitializing}
                 >
                     <option value="html">index.html</option>
@@ -102,8 +102,8 @@ export function CodeEditor({ onUpload, isUploading, uploadProgress }) {
                 <button
                     onClick={handleUpload}
                     disabled={isInitializing}
-                    className={`active-press border-t-[4px] border-black py-4 font-black text-xs uppercase transition-colors shrink-0 ${!isInitializing
-                        ? 'bg-accent hover:bg-white cursor-pointer'
+                    className={`active-press border-t-[4px] border-ink py-4 font-black text-xs uppercase transition-colors shrink-0 ${!isInitializing
+                        ? 'bg-accent text-black hover:bg-white cursor-pointer'
                         : 'bg-gray-400 cursor-not-allowed opacity-60'
                         }`}
                 >

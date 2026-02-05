@@ -81,7 +81,7 @@ function AppContent() {
                             <FileGrid />
                         </div>
                     </div>
-                    <div className="p-3 m-4 border-[2px] border-black/20 text-[10px] font-bold opacity-60 uppercase italic text-center shrink-0">
+                    <div className="p-3 m-4 border-[2px] border-ink/20 text-[10px] font-bold opacity-60 uppercase italic text-center shrink-0">
                         Your data is safe with us.
                     </div>
                 </div>
@@ -94,7 +94,7 @@ function AppContent() {
                     {activeMobileTab === 'files' && (
                         <div className="flex-grow overflow-y-auto p-4 custom-scroll">
                             <FileGrid />
-                            <div className="p-3 m-4 border-[2px] border-black/20 text-[10px] font-bold opacity-60 uppercase italic text-center shrink-0">
+                            <div className="p-3 m-4 border-[2px] border-ink/20 text-[10px] font-bold opacity-60 uppercase italic text-center shrink-0">
                                 Your data is safe with us.
                             </div>
                         </div>
@@ -167,16 +167,25 @@ function Gatekeeper() {
     };
 
     return (
-        <div className="h-screen w-screen flex flex-col items-center justify-center bg-bg text-text">
+        <div className="h-screen w-screen flex flex-col items-center justify-center bg-bg text-ink">
             <div className="mb-8 text-center">
-                <h1 className="text-2xl font-bold mb-2 text-white">File60</h1>
-                <p className="text-gray-300">Verifying you are human. This may take a few seconds.</p>
+                <h1 className="text-4xl font-black mb-2 text-ink tracking-tighter -skew-x-6">
+                    FILE<span className="text-accent">60</span><span className="animate-pulse">_</span>
+                </h1>
+                <div className="text-accent font-bold text-xs uppercase tracking-widest border border-accent/30 inline-block px-3 py-1 rounded-full animate-pulse">
+                    SECURITY_CHECKPOINT
+                </div>
             </div>
-            <div className="bg-white p-4 rounded shadow-sm">
-                <TurnstileCaptcha onVerify={handleVerify} />
+            <div className="bg-terminal p-6 border-[6px] border-ink shadow-brutal flex flex-col items-center gap-4">
+                <div className="bg-white p-2">
+                    <TurnstileCaptcha onVerify={handleVerify} />
+                </div>
+                <div className="text-[10px] font-bold uppercase text-ink/50 text-center max-w-[240px]">
+                    <span className="text-accent">&gt;&gt;</span> VERIFY HUMANITY TO PROCEED
+                </div>
             </div>
-            <div className="mt-8 text-center max-w-md text-sm text-gray-400 px-4">
-                File60 needs to review the security of your connection before proceeding.
+            <div className="mt-8 text-center max-w-md text-[10px] font-bold uppercase text-ink/30 px-4">
+                SYSTEM SECURED // 2048-BIT ENCRYPTION
             </div>
         </div>
     );

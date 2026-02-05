@@ -8,7 +8,7 @@ export const Sidebar = forwardRef(({ onFileSelect, isUploading, uploadProgress }
     return (
         <aside
             ref={ref}
-            className="sidebar w-full md:w-[480px] border-b-[6px] md:border-b-0 md:border-r-[6px] border-ink bg-bg p-6 flex flex-col shrink-0"
+            className="sidebar w-full md:w-[480px] border-b-[6px] md:border-b-0 border-ink bg-bg p-6 flex flex-col shrink-0"
         >
             <h1 className="font-black text-[3.5rem] leading-[0.8] tracking-tighter mb-4 -skew-x-6 text-ink">
                 FILE<span className="text-accent">60</span><span className="animate-pulse">_</span>

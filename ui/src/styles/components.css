@@ -43,7 +43,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    box-shadow: 12px 12px 0px 0px var(--color-accent);
+    box-shadow: 12px 12px 0px 0px #ffffff;
     position: relative;
 }
 

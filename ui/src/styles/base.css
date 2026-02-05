@@ -1,17 +1,17 @@
 /* CSS Variables and Reset */
 :root {
-    /* Colors */
-    --color-bg: #ffffff;
-    --color-core: #ffffff;
-    --color-ink: #050505;
+    /* Colors - Dark Theme (Matching Landing Page) */
+    --color-bg: #000000;
+    --color-core: #0a0a0a;
+    --color-ink: #ffffff;
     --color-accent: #00ff41;
     --color-alert: #ff2a00;
-    --color-terminal: #f4f4f4;
+    --color-terminal: #111111;
 
-    /* Shadows - Black for light mode brutalist effect */
-    --shadow-brutal: 8px 8px 0px 0px #000000;
-    --shadow-brutal-sm: 4px 4px 0px 0px #000000;
-    --shadow-brutal-lg: 12px 12px 0px 0px #000000;
+    /* Shadows - Accent/White for dark mode brutalist effect */
+    --shadow-brutal: 8px 8px 0px 0px #ffffff;
+    --shadow-brutal-sm: 4px 4px 0px 0px #ffffff;
+    --shadow-brutal-lg: 12px 12px 0px 0px #ffffff;
 
     /* Typography */
     --font-mono: 'Courier Prime', monospace;
@@ -24,12 +24,18 @@
     box-sizing: border-box;
 }
 
+::selection {
+    background-color: var(--color-accent);
+    color: #000000;
+}
+
 body,
 html {
     height: 100%;
     margin: 0;
     font-family: var(--font-mono);
     background-color: var(--color-bg);
+    color: var(--color-ink);
 }
 
 #root {
@@ -39,7 +45,7 @@ html {
 /* Base Patterns */
 .bg-grid {
     background-size: 40px 40px;
-    background-image: radial-gradient(circle, #bcbcbc 1px, rgba(0, 0, 0, 0) 1px);
+    background-image: radial-gradient(circle, rgba(0, 255, 65, 0.15) 1px, rgba(0, 0, 0, 0) 1px);
 }
 
 .bg-diagonal-green {

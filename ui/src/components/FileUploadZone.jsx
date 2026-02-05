@@ -1,76 +1,60 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useConfig } from '../context/ConfigContext.jsx';
-import { useApp } from '../context/AppContext.jsx';
 
 export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
-    const fileInputRef = useRef(null);
     const { serverConfig } = useConfig();
-    const { isInitializing } = useApp();
-
-    const handleClick = () => {
-        // Always allow click to trigger file selection
-        // Initialization happens in useFileUpload hook
-        fileInputRef.current?.click();
-    };
 
     const handleFileChange = (e) => {
-        if (e.target.files.length > 0) {
-            onFileSelect(e.target.files[0]);
-        }
+        if (e.target.files.length > 0) onFileSelect(e.target.files[0]);
     };
 
     return (
-        <div
-            onClick={handleClick}
-            className={`flex-grow min-h-[200px] border-[6px] border-ink ${isInitializing
-                ? 'bg-gray-300 cursor-wait opacity-80'
-                : 'bg-diagonal-green hover:bg-accent cursor-crosshair'
-                } transition-all flex flex-col justify-center items-center p-8 relative group shadow-brutal`}
+        /* SINGLE CONTAINER: Fills 100% W/H and uses your exact sidebar animation classes */
+        <label
+            className={`
+                w-full h-full flex flex-col items-center justify-center p-12
+                border-[6px] border-ink bg-bg cursor-pointer select-none
+                ${isUploading ? 'bg-accent cursor-wait' : ''}
+            `}
         >
-            {isInitializing ? (
-                <div className="text-center">
-                    <div className="font-black text-2xl uppercase border-[6px] border-bg bg-ink text-bg px-6 py-3 shadow-brutal">
-                        INITIALIZING...
-                    </div>
-                    <p className="mt-4 text-[10px] font-bold opacity-60">
-                        VERIFYING HUMANITY, PLEASE WAIT
-                    </p>
-                </div>
-            ) : isUploading ? (
-                <div className="text-center w-full">
-                    <div className="font-black text-2xl uppercase border-[6px] border-bg bg-accent text-black px-6 py-3">
-                        STEALING WIFI...
-                    </div>
-                    <div className="progress-container">
-                        <div className="progress-bar" style={{ width: `${uploadProgress}%` }} />
-                    </div>
-                    <div className="upload-info">
-                        <div className="font-black">{Math.round(uploadProgress)}%</div>
-                    </div>
-                </div>
-            ) : (
-                <div className="text-center">
-                    <div className="font-black text-2xl uppercase border-[6px] border-bg bg-ink text-bg px-6 py-3 shadow-brutal group-hover:shadow-none transition-all">
-                        FEED ME FILES
-                    </div>
-                    <p className="mt-6 text-[10px] font-bold tracking-widest leading-relaxed text-ink group-hover:text-black">
-                        TOP SECRET / SPICY MEMES / EVIDENCE
-                    </p>
-                    <p className="mt-2 text-[8px] opacity-60 font-bold uppercase text-ink group-hover:text-black">
-                        DROP IT LIKE IT'S HOT (OR NOT, I'M JUST A DIV)
-                    </p>
-                    <p className="mt-1 text-[8px] opacity-40 font-bold uppercase text-ink group-hover:text-black">
-                        Max size: {serverConfig.maxFileSizeMB}MB
-                    </p>
-                </div>
-            )}
             <input
-                ref={fileInputRef}
                 type="file"
                 className="hidden"
                 onChange={handleFileChange}
-                disabled={isInitializing}
+                disabled={isUploading}
             />
-        </div>
+
+            {isUploading ? (
+                <div className="w-full text-center">
+                    <h2 className="font-black text-4xl uppercase mb-6 italic text-black">Sending</h2>
+                    <div className="w-full border-[6px] border-ink bg-bg h-16 relative overflow-hidden">
+                        <div
+                            className="h-full bg-ink transition-all duration-300"
+                            style={{ width: `${uploadProgress}% ` }}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center font-black text-2xl text-accent mix-blend-difference">
+                            {Math.round(uploadProgress)}%
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <>
+                    {/* Primary Label Block - Matches screenshot styling */}
+                    <div className="bg-ink text-bg px-8 py-10 mb-8 w-full max-w-[280px] border-[4px] border-ink">
+                        <h2 className="font-black text-[2.8rem] leading-[0.85] uppercase tracking-tighter text-center">
+                            Feed Me<br />Files
+                        </h2>
+                    </div>
+
+                    <p className="font-black text-lg uppercase tracking-widest text-ink mb-6">
+                        Drop Files or Click
+                    </p>
+
+                    <div className="border-[2px] border-ink px-4 py-1 font-bold text-[10px] uppercase text-ink">
+                        Max: {serverConfig?.maxFileSizeMB || 100}MB
+                    </div>
+                </>
+            )}
+        </label>
     );
 }

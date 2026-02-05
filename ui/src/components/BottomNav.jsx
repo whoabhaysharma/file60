@@ -8,14 +8,14 @@ export function BottomNav({ activeTab, onTabChange }) {
     ];
 
     return (
-        <nav className="h-16 border-t-[6px] border-white flex shrink-0 bg-bg text-xs font-black uppercase">
+        <nav className="h-16 border-t-[6px] border-ink flex shrink-0 bg-bg text-xs font-black uppercase">
             {tabs.map((tab) => (
                 <button
                     key={tab.id}
                     onClick={() => onTabChange(tab.id)}
-                    className={`flex-1 flex items-center justify-center transition-all border-r-[3px] border-white last:border-r-0 ${activeTab === tab.id
+                    className={`flex-1 flex items-center justify-center transition-all border-r-[3px] border-ink last:border-r-0 ${activeTab === tab.id
                         ? 'bg-accent text-black'
-                        : 'bg-bg text-white hover:bg-white/10'
+                        : 'bg-bg text-ink hover:bg-ink/10'
                         }`}
                 >
                     {tab.label}
