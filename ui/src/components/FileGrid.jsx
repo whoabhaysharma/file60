@@ -8,7 +8,7 @@ export function FileGrid() {
     if (files.length === 0) {
         return (
             <div className="h-full flex items-center justify-center">
-                <div className="text-center">
+                <div className="text-center text-ink">
                     <div className="text-[5rem] font-black opacity-5 -rotate-6 select-none uppercase mb-4">
                         404: FILES NOT FOUND
                     </div>
