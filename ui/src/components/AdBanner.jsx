@@ -27,6 +27,37 @@ export function AdBanner() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const [showAdBlockMessage, setShowAdBlockMessage] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState("Hunting for an ad you'll probably ignore...");
+
+    const loadingMessages = [
+        "Hunting for an ad you'll probably ignore...",
+        "Telling the internet to wake up...",
+        "Hiding your phone number from loan agents...",
+        "Asking a brand to pay for your free visit...",
+        "Finding some loose change for the servers..."
+    ];
+
+    useEffect(() => {
+        // Rotate loading messages
+        let messageIndex = 0;
+        const messageTimer = setInterval(() => {
+            messageIndex = (messageIndex + 1) % loadingMessages.length;
+            setLoadingMessage(loadingMessages[messageIndex]);
+        }, 800);
+
+        // Delay showing the ad-block message to give the ad time to load
+        const timer = setTimeout(() => {
+            setShowAdBlockMessage(true);
+            clearInterval(messageTimer);
+        }, 4000);
+
+        return () => {
+            clearTimeout(timer);
+            clearInterval(messageTimer);
+        };
+    }, []);
+
     useEffect(() => {
         if (!containerRef.current) return;
 
@@ -90,15 +121,29 @@ export function AdBanner() {
                 }}
             >
                 {/* Fallback / Creative Background */}
+                {/* Fallback / Creative Background */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-0 opacity-50 group-hover:opacity-80 transition-opacity p-4">
-                    <p className="font-bold text-sm text-ink/60 mb-1">
-                        Your ad-blocker is doing a great job. BTW.
-                    </p>
-                    <p className="text-xs text-ink/40 max-w-md leading-relaxed">
-                        Respect. But if you ever feel like turning it off,
-                        <br />
-                        our servers would appreciate the <span className="italic">shagun</span>.
-                    </p>
+                    {showAdBlockMessage ? (
+                        <>
+                            <p className="font-bold text-sm text-ink/60 mb-1">
+                                Your ad-blocker is doing a great job. BTW.
+                            </p>
+                            <p className="text-xs text-ink/40 max-w-md leading-relaxed">
+                                Respect. But if you ever feel like turning it off,
+                                <br />
+                                our servers would appreciate the <span className="italic">shagun</span>.
+                            </p>
+                        </>
+                    ) : (
+                        <div className="flex flex-col items-center animate-pulse">
+                            <p className="font-bold text-xs uppercase tracking-widest text-ink/30 mb-1 w-64">
+                                {loadingMessage}
+                            </p>
+                            <div className="w-16 h-1 bg-ink/10 rounded-full mt-2 overflow-hidden">
+                                <div className="h-full bg-accent/50 w-full animate-progress-indeterminate"></div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Ad Container */}
