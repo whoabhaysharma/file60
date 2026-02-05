@@ -43,9 +43,7 @@ export default function Landing() {
         <div className="scanlines absolute inset-0 pointer-events-none opacity-20"></div>
 
         <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="inline-block mb-6 px-3 py-1 border border-accent/30 text-accent/70 text-xs font-bold tracking-[0.2em] uppercase rounded-full animate-pulse">
-            System Online // V.3.0.0
-          </div>
+
           <h2 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase mb-8 leading-[0.9] tracking-tighter mix-blend-screen">
             The 60 Minute<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-400 to-gray-600">File Dump</span>

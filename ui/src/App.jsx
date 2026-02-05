@@ -14,6 +14,7 @@ import { FileUploadZone } from './components/FileUploadZone.jsx';
 import { CodeEditor } from './components/CodeEditor.jsx';
 import { MobileHeader } from './components/MobileHeader.jsx';
 import { BottomNav } from './components/BottomNav.jsx';
+import { AdsDisclaimerModal } from './components/AdsDisclaimerModal.jsx';
 import TurnstileCaptcha from './components/TurnstileCaptcha.jsx';
 import './styles/index.css';
 
@@ -62,6 +63,7 @@ function AppContent() {
             onDrop={handleDrop}
         >
             <Notification notification={notification} />
+            <AdsDisclaimerModal />
             <DragDropOverlay active={dragActive} />
 
             {/* Desktop View */}
