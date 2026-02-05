@@ -46,7 +46,7 @@ export default function Landing() {
 
           <h2 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase mb-8 leading-[0.9] tracking-tighter mix-blend-screen">
             The 60 Minute<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-400 to-gray-600">File Dump</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-400 to-gray-600">Temporary File Upload</span>
           </h2>
           <p className="text-xl md:text-2xl text-gray-400 font-bold uppercase mb-12 max-w-3xl mx-auto leading-relaxed border-l-4 border-accent pl-6 text-left md:text-center md:border-l-0 md:pl-0">
             Share Images, Videos, Code. <span className="text-white">Up to 100MB.</span> <span className="text-white">Any File Type.</span><br />

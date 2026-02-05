@@ -1,6 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /private/
 
 Sitemap: https://file60.pages.dev/sitemap.xml
