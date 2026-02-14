@@ -14,9 +14,9 @@ import { FileUploadZone } from './components/FileUploadZone.jsx';
 import { CodeEditor } from './components/CodeEditor.jsx';
 import { MobileHeader } from './components/MobileHeader.jsx';
 import { BottomNav } from './components/BottomNav.jsx';
-import { AdsDisclaimerModal } from './components/AdsDisclaimerModal.jsx';
+
 import TurnstileCaptcha from './components/TurnstileCaptcha.jsx';
-import { AdBanner } from './components/AdBanner.jsx';
+
 import './styles/index.css';
 
 function AppContent() {
@@ -64,7 +64,7 @@ function AppContent() {
             onDrop={handleDrop}
         >
             <Notification notification={notification} />
-            <AdsDisclaimerModal />
+
             <DragDropOverlay active={dragActive} />
 
             {/* Desktop View */}
@@ -85,7 +85,7 @@ function AppContent() {
 
                         </div>
                     </div>
-                    <AdBanner />
+
                 </div>
             </div>
 
@@ -96,7 +96,7 @@ function AppContent() {
                     {activeMobileTab === 'files' && (
                         <div className="flex-grow overflow-y-auto p-4 custom-scroll">
                             <FileGrid />
-                            <AdBanner />
+
                         </div>
                     )}
                     {activeMobileTab === 'upload' && (
