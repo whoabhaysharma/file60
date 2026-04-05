@@ -1,26 +1,8 @@
-import { json, error, verifyTurnstile, corsHeaders, getAllowedOrigin } from './utils.js';
+import { json, error, getDownloadUrl } from './utils.js';
 import { createJWT } from './auth.js';
+import { generatePresignedUrl, getFileFromS3 } from './aws.js';
 
 export async function createSession(req, env, config) {
-    const turnstileToken = req.headers.get("x-turnstile-token");
-    const ip = req.headers.get("CF-Connecting-IP");
-
-    // DEBUG
-    console.log("Turnstile Secret exists:", !!env.TURNSTILE_SECRET_KEY, "Length:", env.TURNSTILE_SECRET_KEY?.length);
-    console.log("Turnstile Site Key (expected): 1x0000000000000000000000000000000AA");
-
-
-    if (!turnstileToken) {
-        // Optional: Allow bypassing in dev if needed, or fail hard.
-        // For now, fail hard.
-        throw { message: "Turnstile token required", status: 403 };
-    }
-
-    const isValid = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, ip);
-    if (!isValid) {
-        throw { message: "Invalid Captcha", status: 403 };
-    }
-
     const now = Math.floor(Date.now() / 1000);
     const token = await createJWT({ iat: now, exp: now + 86400 }, env.JWT_SECRET);
 
@@ -39,10 +21,6 @@ export async function createSession(req, env, config) {
         "Set-Cookie": cookie
     });
 }
-
-
-import { getDownloadUrl } from './utils.js';
-import { generatePresignedUrl, getFileFromS3 } from './aws.js';
 
 export async function createFile(req, env, config) {
     console.log("ENV KEYS:", Object.keys(env)); // DEBUG: Check what vars are loaded

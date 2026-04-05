@@ -15,8 +15,6 @@ import { CodeEditor } from './components/CodeEditor.jsx';
 import { MobileHeader } from './components/MobileHeader.jsx';
 import { BottomNav } from './components/BottomNav.jsx';
 
-import TurnstileCaptcha from './components/TurnstileCaptcha.jsx';
-
 import './styles/index.css';
 
 function AppContent() {
@@ -127,68 +125,52 @@ function AppContent() {
 function Gatekeeper() {
     const { sessionToken, setIsInitializing } = useApp();
     const { initSession, checkSession } = useApi();
-    const [turnstileVerified, setTurnstileVerified] = useState(false);
-    const [checkingAuth, setCheckingAuth] = useState(true);
+    const [booting, setBooting] = useState(true);
+    const [bootError, setBootError] = useState(null);
 
-    // Initial session check
     useEffect(() => {
-        const verify = async () => {
-            setCheckingAuth(true);
-            await checkSession();
-            setCheckingAuth(false);
-        };
-        verify();
-    }, [checkSession]);
+        let cancelled = false;
+        (async () => {
+            try {
+                const hasSession = await checkSession();
+                if (cancelled) return;
+                if (!hasSession) {
+                    setIsInitializing(true);
+                    await initSession();
+                }
+            } catch (e) {
+                console.error('Session bootstrap failed:', e);
+                if (!cancelled) setBootError(e);
+            } finally {
+                if (!cancelled) {
+                    setIsInitializing(false);
+                    setBooting(false);
+                }
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [checkSession, initSession, setIsInitializing]);
 
-    // If still checking, show nothing or loading state
-    if (checkingAuth) return null;
+    if (booting) return null;
 
-    // If authenticated (sessionToken is true), show app
-    if (sessionToken) {
-        return <AppContent />;
+    if (bootError || !sessionToken) {
+        return (
+            <div className="h-screen w-screen flex flex-col items-center justify-center bg-bg text-ink gap-4 p-6 text-center">
+                <p className="text-sm font-bold uppercase max-w-md text-ink/80">
+                    Could not start a session. Check your connection and try again.
+                </p>
+                <button
+                    type="button"
+                    className="px-4 py-2 border-4 border-ink bg-accent text-black font-black uppercase text-xs shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                    onClick={() => window.location.reload()}
+                >
+                    Retry
+                </button>
+            </div>
+        );
     }
 
-    // Handle verification success
-    const handleVerify = (token) => {
-        if (token) {
-            setTimeout(async () => {
-                try {
-                    setTurnstileVerified(true);
-                    setIsInitializing(true);
-                    await initSession(token);
-                } catch (error) {
-                    console.error("Session initialization failed:", error);
-                    setTurnstileVerified(false);
-                } finally {
-                    setIsInitializing(false);
-                }
-            }, 1500);
-        }
-    };
-
-    return (
-        <div className="h-screen w-screen flex flex-col items-center justify-center bg-bg text-ink">
-            <div className="mb-8 text-center">
-                <h1 className="text-4xl font-black mb-2 text-ink tracking-tighter -skew-x-6">
-                    FILE<span className="text-accent">60</span><span className="animate-pulse">_</span>
-                </h1>
-                <div className="text-accent font-bold text-xs uppercase tracking-widest border border-accent/30 inline-block px-3 py-1 rounded-full animate-pulse">
-                    SECURITY_CHECKPOINT
-                </div>
-            </div>
-            <div className="bg-terminal p-6 border-[6px] border-ink shadow-brutal flex flex-col items-center gap-4">
-                <div className="bg-white p-2">
-                    <TurnstileCaptcha onVerify={handleVerify} />
-                </div>
-                <div className="text-[10px] font-bold uppercase text-ink/50 text-center max-w-[240px]">
-                    <span className="text-accent">&gt;&gt;</span> VERIFY HUMANITY TO PROCEED
-                </div>
-            </div>
-            <div className="mt-8 text-center max-w-md text-[10px] font-bold uppercase text-ink/30 px-4">
-                SYSTEM SECURED // 2048-BIT ENCRYPTION
-            </div>
-        </div>
-    );
+    return <AppContent />;
 }
 
 export default function App() {

@@ -26,7 +26,7 @@ export function useApi() {
         }
     }, [apiUrl, setSessionToken, updateServerConfig]);
 
-    const initSession = useCallback(async (turnstileToken) => {
+    const initSession = useCallback(async () => {
         try {
             if (!apiUrl) {
                 console.warn('API URL not configured. Please set window.APP_CONFIG.API_URL in config.js');
@@ -35,10 +35,7 @@ export function useApi() {
 
             const response = await fetch(`${apiUrl}/api/session`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'x-turnstile-token': turnstileToken || ''
-                }
+                credentials: 'include'
             });
 
             if (!response.ok) {

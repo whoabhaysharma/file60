@@ -17,7 +17,6 @@ export default defineConfig({
         rollupOptions: {
             input: {
                 main: resolve(__dirname, 'ui/index.html'),
-                app: resolve(__dirname, 'ui/app/index.html'),
                 terms: resolve(__dirname, 'ui/terms/index.html'),
                 privacy: resolve(__dirname, 'ui/privacy/index.html'),
                 dmca: resolve(__dirname, 'ui/dmca/index.html'),
