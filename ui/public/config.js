@@ -5,8 +5,8 @@
 
 // In ui/public/config.js
 window.APP_CONFIG = {
-    // Use local worker for localhost, production worker for deployed site
+    // Use local Bunny API runtime for localhost, deployed Bunny Edge API otherwise.
     API_URL: window.location.hostname === 'localhost'
-        ? 'http://localhost:8787'  // Local wrangler dev server
-        : 'https://file60.abhaysharma-as2719.workers.dev'
+        ? 'http://localhost:8787'
+        : 'https://api-file60.bythub.in'
 };

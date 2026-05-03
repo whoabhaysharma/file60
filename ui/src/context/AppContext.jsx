@@ -44,10 +44,15 @@ export function AppProvider({ children }) {
         setFiles(prev => prev.filter(f => f.id !== id));
     };
 
+    const updateFile = (id, updates) => {
+        setFiles(prev => prev.map(file => (file.id === id ? { ...file, ...updates } : file)));
+    };
+
     const value = {
         files,
         setFiles,
         addFile,
+        updateFile,
         removeFile,
         isUploading,
         setIsUploading,

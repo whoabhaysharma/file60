@@ -1,11 +1,17 @@
 import React from 'react';
 import { useConfig } from '../context/ConfigContext.jsx';
 
-export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
+export function FileUploadZone({ onFileSelect, onFilesSelect, isUploading, uploadProgress }) {
     const { serverConfig } = useConfig();
 
     const handleFileChange = (e) => {
-        if (e.target.files.length > 0) onFileSelect(e.target.files[0]);
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        if (files.length === 1 && !onFilesSelect) {
+            onFileSelect?.(files[0]);
+            return;
+        }
+        onFilesSelect?.(files);
     };
 
     return (
@@ -21,6 +27,7 @@ export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
                 type="file"
                 className="hidden"
                 onChange={handleFileChange}
+                multiple
                 disabled={isUploading}
             />
 
@@ -51,7 +58,7 @@ export function FileUploadZone({ onFileSelect, isUploading, uploadProgress }) {
                     </p>
 
                     <div className="border-[2px] border-ink px-4 py-1 font-bold text-[10px] uppercase text-ink">
-                        Max: {serverConfig?.maxFileSizeMB || 100}MB
+                        Max: {serverConfig?.maxFileSizeMB || 300}MB
                     </div>
                 </>
             )}

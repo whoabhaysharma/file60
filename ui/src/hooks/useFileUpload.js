@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { useConfig } from '../context/ConfigContext.jsx';
 import { useApi } from './useApi.js';
@@ -8,10 +8,21 @@ import { validateFile } from '../utils/validators.js';
  * Custom hook for file upload functionality
  */
 export function useFileUpload(onSuccess, onError) {
-    const { addFile, isUploading, setIsUploading, sessionToken, sessionReady, initializeSession, isInitializing } = useApp();
-    const { apiUrl, serverConfig } = useConfig();
+    const { addFile, isUploading, setIsUploading, sessionToken } = useApp();
+    const { serverConfig } = useConfig();
     const { uploadFile: apiUploadFile } = useApi();
     const [uploadProgress, setUploadProgress] = useState(0);
+    const rafRef = useRef(null);
+    const pendingProgressRef = useRef(0);
+
+    const setProgressOptimized = useCallback((value) => {
+        pendingProgressRef.current = value;
+        if (rafRef.current) return;
+        rafRef.current = requestAnimationFrame(() => {
+            rafRef.current = null;
+            setUploadProgress(pendingProgressRef.current);
+        });
+    }, []);
 
     const uploadFile = useCallback(async (file, overrideToken) => {
         // Validate
@@ -35,42 +46,17 @@ export function useFileUpload(onSuccess, onError) {
         }
 
         setIsUploading(true);
-        setUploadProgress(1); // Start
+        setProgressOptimized(0);
 
         try {
-            // Step 1: Get Presigned URL from Backend
-            const resData = await apiUploadFile(file, tokenToUse);
-
-            if (!resData.upload_url) {
-                throw new Error('Server did not provide an upload URL.');
-            }
-
-            // Step 2: Upload directly to R2 using the Presigned URL
-            await new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-
-                xhr.upload.addEventListener('progress', (e) => {
-                    if (e.lengthComputable) {
-                        const percent = (e.loaded / e.total) * 100;
-                        setUploadProgress(percent);
-                    }
-                });
-
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve();
-                    } else {
-                        reject(new Error(`Upload failed with status ${xhr.status}`));
-                    }
-                };
-
-                xhr.onerror = () => reject(new Error('Network error during upload'));
-
-                xhr.open('PUT', resData.upload_url);
-                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-                // Note: If we added custom metadata in generating the signed URL, we MUST match headers here.
-                xhr.send(file);
+            // Real upload progress (bytes sent) with UI-throttled updates.
+            const resData = await apiUploadFile(file, tokenToUse, (loaded, total) => {
+                if (!total) return;
+                // Keep small headroom for backend finalize/response parsing.
+                const pct = Math.min(95, Math.round((loaded / total) * 95));
+                setProgressOptimized(pct);
             });
+            setProgressOptimized(100);
 
             // Add file to state
             const fileData = {
@@ -79,7 +65,8 @@ export function useFileUpload(onSuccess, onError) {
                 url: resData.url,
                 type: file.type || 'text/plain',
                 expires: resData.expires_at,
-                created: resData.created_at
+                created: resData.created_at,
+                canExtend: resData.can_extend !== false
             };
 
             addFile(fileData);
@@ -89,15 +76,19 @@ export function useFileUpload(onSuccess, onError) {
             onError?.(error.message || 'Upload failed.');
         } finally {
             setIsUploading(false);
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+                rafRef.current = null;
+            }
             setUploadProgress(0);
         }
     }, [
         isUploading,
         sessionToken,
         serverConfig.maxFileSize,
-        apiUrl,
         setIsUploading,
         apiUploadFile,
+        setProgressOptimized,
         addFile,
         onSuccess,
         onError

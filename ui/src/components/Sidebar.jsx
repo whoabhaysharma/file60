@@ -2,7 +2,7 @@ import React, { useState, forwardRef } from 'react';
 import { FileUploadZone } from './FileUploadZone.jsx';
 import { CodeEditor } from './CodeEditor.jsx';
 
-export const Sidebar = forwardRef(({ onFileSelect, isUploading, uploadProgress }, ref) => {
+export const Sidebar = forwardRef(({ onFileSelect, onFilesSelect, isUploading, uploadProgress }, ref) => {
     const [mode, setMode] = useState('upload');
 
     return (
@@ -42,6 +42,7 @@ export const Sidebar = forwardRef(({ onFileSelect, isUploading, uploadProgress }
                 <div className="flex flex-col flex-grow min-h-0 overflow-y-auto custom-scroll">
                     <FileUploadZone
                         onFileSelect={onFileSelect}
+                        onFilesSelect={onFilesSelect}
                         isUploading={isUploading}
                         uploadProgress={uploadProgress}
                     />
