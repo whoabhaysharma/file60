@@ -36,11 +36,11 @@ export function FileUploadZone({ onFileSelect, onFilesSelect, isUploading, uploa
                     <h2 className="font-black text-4xl uppercase mb-6 italic text-black">Sending</h2>
                     <div className="w-full border-[6px] border-ink bg-bg h-16 relative overflow-hidden">
                         <div
-                            className="h-full bg-ink transition-all duration-300"
+                            className="h-full bg-ink transition-all duration-100 linear"
                             style={{ width: `${uploadProgress}% ` }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center font-black text-2xl text-accent mix-blend-difference">
-                            {Math.round(uploadProgress)}%
+                            {uploadProgress.toFixed(1)}%
                         </div>
                     </div>
                 </div>
@@ -58,7 +58,7 @@ export function FileUploadZone({ onFileSelect, onFilesSelect, isUploading, uploa
                     </p>
 
                     <div className="border-[2px] border-ink px-4 py-1 font-bold text-[10px] uppercase text-ink">
-                        Max: {serverConfig?.maxFileSizeMB || 300}MB
+                        Max: {serverConfig?.maxFileSizeMB || 100}MB
                     </div>
                 </>
             )}

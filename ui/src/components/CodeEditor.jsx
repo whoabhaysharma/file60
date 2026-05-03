@@ -94,7 +94,7 @@ export function CodeEditor({ onUpload, isUploading, uploadProgress }) {
                             <div className="progress-bar !bg-accent" style={{ width: `${uploadProgress}%` }} />
                         </div>
                         <div className="upload-info text-accent !mt-1">
-                            <div className="font-black">{Math.round(uploadProgress)}%</div>
+                            <div className="font-black">{uploadProgress.toFixed(1)}%</div>
                         </div>
                     </div>
                 </div>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { formatRemainingTime, calculateTimePercentage } from '../utils/time.js';
 
-export function FileCard({ file, onRemove, onExtend }) {
+export function FileCard({ file, onRemove }) {
     const [timeDisplay, setTimeDisplay] = useState('Calculating...');
     const [timePercentage, setTimePercentage] = useState(100);
-    const [isExtending, setIsExtending] = useState(false);
+
 
     useEffect(() => {
         if (file.expires === 'never') {
@@ -48,19 +48,7 @@ export function FileCard({ file, onRemove, onExtend }) {
 
     const isImage = file.type.startsWith('image');
     const ext = file.name.split('.').pop();
-    const canExtend = file.canExtend !== false;
 
-    const handleExtend = async () => {
-        if (isExtending || !canExtend) return;
-        try {
-            setIsExtending(true);
-            await onExtend(file.id);
-        } catch (error) {
-            console.error('Failed to extend file expiry:', error);
-        } finally {
-            setIsExtending(false);
-        }
-    };
 
     return (
         <div className="bg-bg border-[6px] border-ink p-5 flex flex-col gap-5">
@@ -86,14 +74,7 @@ export function FileCard({ file, onRemove, onExtend }) {
                 >
                     COPY LINK
                 </button>
-                <button
-                    onClick={handleExtend}
-                    disabled={isExtending || !canExtend}
-                    className="bg-bg text-ink border-[4px] border-ink px-3 py-3 font-black text-[10px] uppercase transition-all shadow-brutal hover:shadow-brutal-sm hover:translate-x-[4px] hover:translate-y-[4px] active:translate-x-[8px] active:translate-y-[8px] active:shadow-none disabled:opacity-60 disabled:cursor-not-allowed"
-                    title={canExtend ? 'Make file available for 24 hours from now' : '24h extension already used'}
-                >
-                    {isExtending ? 'UPDATING' : canExtend ? '24H' : 'USED'}
-                </button>
+
                 <button
                     onClick={() => onRemove(file.id)}
                     className="w-16 bg-alert text-white border-[4px] border-ink font-black text-xl flex items-center justify-center transition-all shadow-brutal hover:shadow-brutal-sm hover:translate-x-[4px] hover:translate-y-[4px] active:translate-x-[8px] active:translate-y-[8px] active:shadow-none"

@@ -3,8 +3,8 @@
 export const STORAGE_KEY = 'file60_v3';
 
 export const DEFAULT_CONFIG = {
-    maxFileSize: 300 * 1024 * 1024, // 300MB
-    maxFileSizeMB: 300
+    maxFileSize: 100 * 1024 * 1024, // 100MB
+    maxFileSizeMB: 100
 };
 
 export const NOTIFICATION_DURATION = {

@@ -52,8 +52,8 @@ export function useFileUpload(onSuccess, onError) {
             // Real upload progress (bytes sent) with UI-throttled updates.
             const resData = await apiUploadFile(file, tokenToUse, (loaded, total) => {
                 if (!total) return;
-                // Keep small headroom for backend finalize/response parsing.
-                const pct = Math.min(95, Math.round((loaded / total) * 95));
+                // Real upload progress (bytes sent) with one decimal precision
+                const pct = (loaded / total) * 100;
                 setProgressOptimized(pct);
             });
             setProgressOptimized(100);

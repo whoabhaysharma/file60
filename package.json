@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev:backend": "npm run dev:bunny-edge",
-    "dev:bunny-edge": "sh -c 'fuser -k 8787/tcp >/dev/null 2>&1 || true; set -a; [ -f .dev.vars ] && . ./.dev.vars; set +a; npx --yes deno run -A bunny-edge/api.ts'",
+    "dev:bunny-edge": "sh -c 'fuser -k 8787/tcp >/dev/null 2>&1 || true; npx --yes deno run -A bunny-edge/api.ts'",
     "dev:ui": "vite",
     "build:ui": "vite build",
     "build:bunny-edge": "node scripts/build-bunny-edge.mjs",

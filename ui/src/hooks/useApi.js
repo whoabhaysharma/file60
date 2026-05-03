@@ -110,48 +110,11 @@ export function useApi() {
         });
     }, [apiUrl]);
 
-    const startExtendAdGate = useCallback(async (fileId) => {
-        const response = await fetch(`${apiUrl}/api/file/${fileId}/ad-gate/start`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: sessionToken && typeof sessionToken === 'string'
-                ? { 'x-session-token': sessionToken }
-                : undefined
-        });
 
-        if (!response.ok) {
-            const details = await response.text().catch(() => '');
-            throw new Error(`Failed to start ad gate (${response.status})${details ? `: ${details}` : ''}`);
-        }
-
-        return await response.json();
-    }, [apiUrl, sessionToken]);
-
-    const extendFileExpiry = useCallback(async (fileId, adGateToken) => {
-        const response = await fetch(`${apiUrl}/api/file/${fileId}/extend`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                ...(sessionToken && typeof sessionToken === 'string'
-                    ? { 'x-session-token': sessionToken }
-                    : {}),
-                'x-ad-gate-token': adGateToken
-            }
-        });
-
-        if (!response.ok) {
-            const details = await response.text().catch(() => '');
-            throw new Error(`Failed to extend expiry (${response.status})${details ? `: ${details}` : ''}`);
-        }
-
-        return await response.json();
-    }, [apiUrl, sessionToken]);
 
     return {
         initSession,
         uploadFile,
-        checkSession,
-        startExtendAdGate,
-        extendFileExpiry
+        checkSession
     };
 }
