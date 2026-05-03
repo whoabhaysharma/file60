@@ -1,6 +1,6 @@
 import * as BunnySDK from "@bunny.net/edgescript-sdk";
 import * as BunnyStorageSDK from "@bunny.net/storage-sdk";
-import { createClient } from "@libsql/client/http";
+import { createClient } from "@libsql/client/web";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -53,23 +53,50 @@ function env(key: string, fallback = ""): string {
   return fallback;
 }
 
-/** Bunny Database URLs are usually `libsql://…lite.bunnydb.net`; use HTTPS for the HTTP driver on Edge. */
+/** Bunny Database URLs follow `libsql://…lite.bunnydb.net`; keep protocol for libsql client compatibility. */
 function normalizeLibsqlRemoteUrl(raw: string): string {
   const t = raw.trim();
   if (!t) return t;
-  if (t.startsWith("libsql://")) {
-    const hostAndPath = t.slice("libsql://".length).replace(/^\/+/, "").replace(/\/+$/, "");
-    return `https://${hostAndPath}`;
-  }
   return t.replace(/\/+$/, "");
 }
 
+function getAllowedCorsOrigins(): string[] {
+  const raw = env("CORS_ORIGIN", "").trim();
+  if (!raw) return [];
+  if (raw === "*") return ["*"];
+  return raw
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+}
+
+function isOriginAllowed(origin: string, allowEntry: string): boolean {
+  if (allowEntry === "*") return true;
+  if (allowEntry === origin) return true;
+  // Support wildcard subdomains like https://*.example.com
+  if (allowEntry.includes("*.")) {
+    const expected = allowEntry.replace("*.", "");
+    return origin.endsWith(expected);
+  }
+  return false;
+}
+
+function resolveCorsOrigin(request: Request): string {
+  const requestOrigin = request.headers.get("Origin");
+  const allowlist = getAllowedCorsOrigins();
+  if (!requestOrigin) return allowlist[0] || "*";
+  // If CORS_ORIGIN is not configured, default to request origin for easier setup.
+  if (!allowlist.length) return requestOrigin;
+  return allowlist.some((entry) => isOriginAllowed(requestOrigin, entry)) ? requestOrigin : "null";
+}
+
 function getCorsHeaders(request: Request): Record<string, string> {
-  const origin = request.headers.get("Origin");
-  const fallback = env("CORS_ORIGIN", "*");
+  const origin = resolveCorsOrigin(request);
+  const allowCredentials = origin !== "*";
   return {
-    "Access-Control-Allow-Origin": origin || fallback,
-    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Credentials": allowCredentials ? "true" : "false",
+    Vary: "Origin",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, x-session-token, x-turnstile-token, x-ad-gate-token, X-File-Name, X-File-Size, X-File-Type, Cookie"
   };
@@ -110,7 +137,7 @@ function getStorageRegion(raw: string) {
 }
 
 function getConfig(): RuntimeConfig {
-  const jwtSecret = env("JWT_SECRET", "dev-local-jwt-secret");
+  const jwtSecret = env("JWT_SECRET");
   const configuredMaxFileSize = Number.parseInt(env("MAX_FILE_SIZE", `${MAX_FILE_SIZE_HARD_LIMIT}`), 10);
   const maxFileSize = Math.min(
     Number.isFinite(configuredMaxFileSize) ? configuredMaxFileSize : MAX_FILE_SIZE_HARD_LIMIT,
@@ -130,6 +157,9 @@ function getConfig(): RuntimeConfig {
       : null;
 
   if (!jwtSecret) throw new Error("Missing JWT_SECRET");
+  if (jwtSecret.length < 32) {
+    throw new Error("JWT_SECRET must be at least 32 characters");
+  }
   if (!storageZone || !storageAccessKey) {
     throw new Error("Missing Bunny storage credentials (BUNNY_STORAGE_ZONE/BUNNY_STORAGE_ACCESS_KEY)");
   }
@@ -402,8 +432,7 @@ async function handleCreateFile(request: Request, config: RuntimeConfig) {
       await assertObjectListedUnderTemp(storageZone, publicId);
     }
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Storage upload failed";
-    return json(request, { error: msg, step: "storage_upload" }, 502);
+    return json(request, { error: "Storage upload failed", step: "storage_upload" }, 502);
   }
 
   let createdAtSeconds = Math.floor(Date.now() / 1000);
@@ -429,8 +458,7 @@ async function handleCreateFile(request: Request, config: RuntimeConfig) {
       createdAtSeconds = Number(row?.createdAt || createdAtSeconds);
       expiresAtSeconds = Number(row?.expiresAt || expiresAtSeconds);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Database error";
-      return json(request, { error: msg, step: "database" }, 503);
+      return json(request, { error: "Database write failed", step: "database" }, 503);
     }
   } else {
     localFiles.set(publicId, {
