@@ -1,6 +1,6 @@
 import * as BunnySDK from "@bunny.net/edgescript-sdk";
 import * as BunnyStorageSDK from "@bunny.net/storage-sdk";
-import { createClient } from "@libsql/client/web";
+import { createClient } from "@libsql/client/http";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -37,14 +37,31 @@ const filesTable = sqliteTable("files", {
 });
 
 function env(key: string, fallback = ""): string {
-  const bunnyRuntimeEnv = (globalThis as any).Bunny?.environment;
-  const runtimeValue = bunnyRuntimeEnv?.get?.(key);
-  if (runtimeValue) return runtimeValue;
+  // Deno local dev (npm run dev:bunny-edge)
   const denoRuntime = (globalThis as any).Deno;
   const denoValue = denoRuntime?.env?.get?.(key);
-  if (denoValue) return denoValue;
-  const processValue = typeof process !== "undefined" ? process.env?.[key] : undefined;
-  return processValue ?? fallback;
+  if (denoValue && String(denoValue).trim()) return String(denoValue).trim();
+  // Bunny Edge: credentials from "Add Secrets to Edge Script" are often exposed here first
+  const bunnyRuntimeEnv = (globalThis as any).Bunny?.environment;
+  const bunnyValue = bunnyRuntimeEnv?.get?.(key);
+  if (bunnyValue != null && String(bunnyValue).trim()) return String(bunnyValue).trim();
+  // Bunny Edge / Node-style dashboard variables
+  if (typeof process !== "undefined" && process.env?.[key] !== undefined) {
+    const p = String(process.env[key]).trim();
+    if (p) return p;
+  }
+  return fallback;
+}
+
+/** Bunny Database URLs are usually `libsql://…lite.bunnydb.net`; use HTTPS for the HTTP driver on Edge. */
+function normalizeLibsqlRemoteUrl(raw: string): string {
+  const t = raw.trim();
+  if (!t) return t;
+  if (t.startsWith("libsql://")) {
+    const hostAndPath = t.slice("libsql://".length).replace(/^\/+/, "").replace(/\/+$/, "");
+    return `https://${hostAndPath}`;
+  }
+  return t.replace(/\/+$/, "");
 }
 
 function getCorsHeaders(request: Request): Record<string, string> {
@@ -99,18 +116,24 @@ function getConfig(): RuntimeConfig {
     Number.isFinite(configuredMaxFileSize) ? configuredMaxFileSize : MAX_FILE_SIZE_HARD_LIMIT,
     MAX_FILE_SIZE_HARD_LIMIT
   );
-  const publicUrl = env("BUNNY_PUBLIC_URL");
+  const publicUrl = env("BUNNY_PUBLIC_URL", "https://cdn-file60.bythub.in").trim();
   const storageZone = env("BUNNY_STORAGE_ZONE");
   const storageAccessKey = env("BUNNY_STORAGE_ACCESS_KEY");
   const storageRegion = getStorageRegion(env("BUNNY_STORAGE_REGION", "Falkenstein"));
-  const dbUrl = env("BUNNY_DATABASE_URL") || null;
-  const dbAuthToken = env("BUNNY_DATABASE_AUTH_TOKEN") || null;
+  const dbUrlRaw = env("BUNNY_DATABASE_URL") || null;
+  const dbAuthTokenRaw = env("BUNNY_DATABASE_AUTH_TOKEN") || null;
+  const dbAuthToken =
+    dbAuthTokenRaw && String(dbAuthTokenRaw).trim() ? String(dbAuthTokenRaw).trim() : null;
+  const dbUrl =
+    dbUrlRaw && dbAuthToken && String(dbUrlRaw).trim()
+      ? normalizeLibsqlRemoteUrl(String(dbUrlRaw))
+      : null;
 
   if (!jwtSecret) throw new Error("Missing JWT_SECRET");
   if (!storageZone || !storageAccessKey) {
     throw new Error("Missing Bunny storage credentials (BUNNY_STORAGE_ZONE/BUNNY_STORAGE_ACCESS_KEY)");
   }
-  if (!publicUrl) throw new Error("Missing BUNNY_PUBLIC_URL");
+  if (!publicUrl) throw new Error("Missing BUNNY_PUBLIC_URL (set it or rely on default CDN host)");
   return {
     jwtSecret,
     maxFileSize,
@@ -139,6 +162,7 @@ async function uploadBytesToBunnyStorage(
   contentType: string
 ) {
   const url = BunnyStorageSDK.zone.addr(storageZone);
+  // Match @bunny.net/storage-sdk file.upload path joining exactly (zone base + object path).
   url.pathname = `${url.pathname}${objectPath}`;
   const [authHeader, accessKey] = BunnyStorageSDK.zone.key(storageZone);
   const headers: Record<string, string> = {
@@ -153,16 +177,17 @@ async function uploadBytesToBunnyStorage(
   });
   if (!response.ok) {
     const zoneName = BunnyStorageSDK.zone.name(storageZone);
+    const detail = (await response.text().catch(() => "")).slice(0, 200);
     if (response.status === 401) {
       throw new Error(`Unauthorized access to storage zone: ${zoneName}`);
     }
     if (response.status === 400) {
-      throw new Error("Unable to upload file (invalid path or checksum)");
+      throw new Error(`Storage rejected upload (400)${detail ? `: ${detail}` : ""}`);
     }
     if (response.status === 404) {
       throw new Error(`File not found: ${objectPath}`);
     }
-    throw new Error("Storage upload failed");
+    throw new Error(`Storage upload failed (${response.status})${detail ? `: ${detail}` : ""}`);
   }
 }
 
@@ -252,9 +277,16 @@ function sanitizeFilename(rawName: string): string {
   return safeName;
 }
 
+function buildSessionCookie(token: string, request: Request): string {
+  const isHttps = new URL(request.url).protocol === "https:";
+  // Secure is required for reliable cookie storage on HTTPS; omit on http:// local dev.
+  const secureAttr = isHttps ? "; Secure" : "";
+  return `file60_session=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax${secureAttr}`;
+}
+
 async function handleCreateSession(request: Request, config: RuntimeConfig) {
   const token = await createToken(config.jwtSecret);
-  const cookie = `file60_session=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax`;
+  const cookie = buildSessionCookie(token, request);
   return json(
     request,
     {
@@ -275,10 +307,15 @@ const localFiles = new Map<string, FileRecord>();
 
 function getDbClient(config: RuntimeConfig) {
   requireDatabaseConfig(config);
-  return createClient({
-    url: config.dbUrl!,
-    authToken: config.dbAuthToken!
-  });
+  try {
+    return createClient({
+      url: config.dbUrl!,
+      authToken: config.dbAuthToken!,
+      fetch: globalThis.fetch.bind(globalThis)
+    });
+  } catch (e) {
+    throw new Error(`Failed to create libSQL client: ${e instanceof Error ? e.message : String(e)}`);
+  }
 }
 
 function getOrm(config: RuntimeConfig) {
@@ -290,19 +327,23 @@ async function ensureSchema(config: RuntimeConfig) {
   const dbUrl = config.dbUrl!;
   if (!schemaInit.has(dbUrl)) {
     const initPromise = (async () => {
-      const db = getDbClient(config);
-      await db.execute(`
-        CREATE TABLE IF NOT EXISTS files (
-          id TEXT PRIMARY KEY,
-          object_path TEXT NOT NULL,
-          content_type TEXT NOT NULL,
-          created_at INTEGER NOT NULL DEFAULT (unixepoch('now')),
-          expires_at INTEGER NOT NULL DEFAULT (unixepoch('now') + 3600),
-          extended_once INTEGER NOT NULL DEFAULT 0
-        )
-      `);
-      // Backfill old local schemas created before extended_once existed.
-      await db.execute(`ALTER TABLE files ADD COLUMN extended_once INTEGER NOT NULL DEFAULT 0`).catch(() => {});
+      try {
+        const db = getDbClient(config);
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS files (
+            id TEXT PRIMARY KEY,
+            object_path TEXT NOT NULL,
+            content_type TEXT NOT NULL,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            expires_at INTEGER NOT NULL DEFAULT (strftime('%s','now','+3600 seconds')),
+            extended_once INTEGER NOT NULL DEFAULT 0
+          )
+        `);
+        // Backfill old local schemas created before extended_once existed.
+        await db.execute(`ALTER TABLE files ADD COLUMN extended_once INTEGER NOT NULL DEFAULT 0`).catch(() => {});
+      } catch (e) {
+        throw new Error(`Database schema init failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
     })();
     schemaInit.set(dbUrl, initPromise);
   }
@@ -352,29 +393,45 @@ async function handleCreateFile(request: Request, config: RuntimeConfig) {
   if (actualFileSize <= 0) return badRequest(request, "Missing or invalid file size");
   if (actualFileSize > config.maxFileSize) return json(request, { error: "File too large" }, 413);
   const storageZone = getStorageZone(config);
-  await uploadBytesToBunnyStorage(storageZone, objectPath, bodyBytes, contentType);
+  try {
+    // Ensure /temp exists as a directory so the Storage zone file browser shows a temp folder consistently.
+    await BunnyStorageSDK.file.createDirectory(storageZone, "/temp").catch(() => {});
+    await uploadBytesToBunnyStorage(storageZone, objectPath, bodyBytes, contentType);
+    const verifyList = env("VERIFY_STORAGE_LIST", "");
+    if (verifyList === "1" || verifyList.toLowerCase() === "true") {
+      await assertObjectListedUnderTemp(storageZone, publicId);
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Storage upload failed";
+    return json(request, { error: msg, step: "storage_upload" }, 502);
+  }
 
   let createdAtSeconds = Math.floor(Date.now() / 1000);
   let expiresAtSeconds = createdAtSeconds + 3600;
   if (isDatabaseConfigured(config)) {
-    await ensureSchema(config);
-    const orm = getOrm(config);
-    await orm.insert(filesTable).values({
-      id: publicId,
-      objectPath,
-      contentType,
-      createdAt: createdAtSeconds,
-      expiresAt: expiresAtSeconds,
-      extendedOnce: 0
-    });
-    const rows = await orm
-      .select({ createdAt: filesTable.createdAt, expiresAt: filesTable.expiresAt, extendedOnce: filesTable.extendedOnce })
-      .from(filesTable)
-      .where(eq(filesTable.id, publicId))
-      .limit(1);
-    const row = rows[0];
-    createdAtSeconds = Number(row?.createdAt || createdAtSeconds);
-    expiresAtSeconds = Number(row?.expiresAt || expiresAtSeconds);
+    try {
+      await ensureSchema(config);
+      const orm = getOrm(config);
+      await orm.insert(filesTable).values({
+        id: publicId,
+        objectPath,
+        contentType,
+        createdAt: createdAtSeconds,
+        expiresAt: expiresAtSeconds,
+        extendedOnce: 0
+      });
+      const rows = await orm
+        .select({ createdAt: filesTable.createdAt, expiresAt: filesTable.expiresAt, extendedOnce: filesTable.extendedOnce })
+        .from(filesTable)
+        .where(eq(filesTable.id, publicId))
+        .limit(1);
+      const row = rows[0];
+      createdAtSeconds = Number(row?.createdAt || createdAtSeconds);
+      expiresAtSeconds = Number(row?.expiresAt || expiresAtSeconds);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Database error";
+      return json(request, { error: msg, step: "database" }, 503);
+    }
   } else {
     localFiles.set(publicId, {
       id: publicId,
@@ -387,9 +444,13 @@ async function handleCreateFile(request: Request, config: RuntimeConfig) {
   }
 
   const cdnBase = config.publicUrl.replace(/\/+$/, "");
+  const storageObjectKey = objectPath.replace(/^\/+/, "");
   return json(request, {
     id: publicId,
     url: `${cdnBase}/temp/${publicId}`,
+    storage_zone: config.storageZone,
+    storage_region: String(config.storageRegion),
+    storage_object_key: storageObjectKey,
     expires_at: expiresAtSeconds * 1000,
     expires_at_iso: new Date(expiresAtSeconds * 1000).toISOString(),
     created_at: createdAtSeconds * 1000,
@@ -397,11 +458,48 @@ async function handleCreateFile(request: Request, config: RuntimeConfig) {
   });
 }
 
+/** Optional post-upload check: list /temp and confirm the object appears (set VERIFY_STORAGE_LIST=1 when debugging). */
+async function assertObjectListedUnderTemp(
+  storageZone: ReturnType<typeof getStorageZone>,
+  publicId: string
+): Promise<void> {
+  const maxAttempts = 5;
+  const delayMs = 200;
+  const zoneLabel = BunnyStorageSDK.zone.name(storageZone);
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    let entries: Awaited<ReturnType<typeof BunnyStorageSDK.file.list>>;
+    try {
+      entries = await BunnyStorageSDK.file.list(storageZone, "/temp");
+    } catch (err) {
+      if (attempt === maxAttempts - 1) {
+        throw new Error(
+          `Could not list /temp/ in storage zone "${zoneLabel}" after upload: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+      await new Promise((r) => setTimeout(r, delayMs));
+      continue;
+    }
+    const found = entries.some(
+      (e) => !e.isDirectory && (String(e.path || "").includes(publicId) || String(e.objectName || "").includes(publicId))
+    );
+    if (found) return;
+    if (attempt < maxAttempts - 1) await new Promise((r) => setTimeout(r, delayMs));
+  }
+  throw new Error(
+    `Upload reported OK but "${publicId}" was not found under /temp/ in zone "${zoneLabel}". Check that Edge env BUNNY_STORAGE_ZONE and BUNNY_STORAGE_REGION match the Storage zone you open in the Bunny dashboard (Storage → File manager, not Edge Storage).`
+  );
+}
+
 async function handleGetSession(request: Request, config: RuntimeConfig) {
   const isAuthenticated = await authenticate(request, config);
   if (!isAuthenticated) return json(request, { error: "Unauthorized" }, 401);
+  const headerToken = request.headers.get("x-session-token");
+  const cookies = parseCookies(request.headers.get("cookie"));
+  const sessionToken = headerToken || cookies.file60_session || "";
   return json(request, {
     authenticated: true,
+    // Echo JWT so the SPA can send x-session-token on XHR (cookie alone is flaky cross-subdomain / with some CDNs).
+    session_token: sessionToken,
     config: {
       maxFileSize: config.maxFileSize,
       maxFileSizeMB: Math.round((config.maxFileSize / (1024 * 1024)) * 10) / 10,

@@ -19,7 +19,11 @@ export function useApi() {
             });
             if (response.status === 200) {
                 const data = await response.json();
-                setSessionToken(true);
+                if (typeof data.session_token === 'string' && data.session_token.length > 0) {
+                    setSessionToken(data.session_token);
+                } else {
+                    setSessionToken(true);
+                }
                 if (data.config) updateServerConfig(data.config);
                 return true;
             }

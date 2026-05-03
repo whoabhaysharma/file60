@@ -58,11 +58,20 @@ export function useFileUpload(onSuccess, onError) {
             });
             setProgressOptimized(100);
 
+            const cdnBase =
+                typeof window !== 'undefined' && window.APP_CONFIG && window.APP_CONFIG.FILES_CDN_BASE
+                    ? String(window.APP_CONFIG.FILES_CDN_BASE).replace(/\/+$/, '')
+                    : '';
+            const fileUrl =
+                cdnBase && resData.id
+                    ? `${cdnBase}/temp/${resData.id}`
+                    : resData.url;
+
             // Add file to state
             const fileData = {
                 id: resData.id,
                 name: file.name,
-                url: resData.url,
+                url: fileUrl,
                 type: file.type || 'text/plain',
                 expires: resData.expires_at,
                 created: resData.created_at,
