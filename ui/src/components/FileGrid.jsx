@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { FileCard } from './FileCard.jsx';
-import { useApi } from '../hooks/useApi.js';
 
 export function FileGrid() {
-    const { files, removeFile, updateFile } = useApp();
-    const { extendFileExpiry, startExtendAdGate } = useApi();
+    const { files, removeFile } = useApp();
 
 
     if (files.length === 0) {

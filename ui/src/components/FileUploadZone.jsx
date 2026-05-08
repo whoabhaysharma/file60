@@ -1,8 +1,6 @@
 import React from 'react';
-import { useConfig } from '../context/ConfigContext.jsx';
 
 export function FileUploadZone({ onFileSelect, onFilesSelect, isUploading, uploadProgress }) {
-    const { serverConfig } = useConfig();
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files || []);
@@ -58,7 +56,7 @@ export function FileUploadZone({ onFileSelect, onFilesSelect, isUploading, uploa
                     </p>
 
                     <div className="border-[2px] border-ink px-4 py-1 font-bold text-[10px] uppercase text-ink">
-                        Max: {serverConfig?.maxFileSizeMB || 100}MB
+                        Max: 100MB
                     </div>
                 </>
             )}

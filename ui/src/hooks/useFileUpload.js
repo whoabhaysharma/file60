@@ -1,111 +1,99 @@
 import { useState, useCallback, useRef } from 'react';
-import { useApp } from '../context/AppContext.jsx';
-import { useConfig } from '../context/ConfigContext.jsx';
-import { useApi } from './useApi.js';
-import { validateFile } from '../utils/validators.js';
+import { initSession, hasSession, getUploadUrl, confirmUpload } from '../api.js';
+
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB default, overridden by server
 
 /**
- * Custom hook for file upload functionality
+ * Manages the full file upload lifecycle:
+ * 1. Ensure we have a session (create one if not)
+ * 2. Get a presigned URL from the backend
+ * 3. PUT the file directly to B2
+ * 4. Confirm the upload with the backend
  */
 export function useFileUpload(onSuccess, onError) {
-    const { addFile, isUploading, setIsUploading, sessionToken } = useApp();
-    const { serverConfig } = useConfig();
-    const { uploadFile: apiUploadFile } = useApi();
+    const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const rafRef = useRef(null);
-    const pendingProgressRef = useRef(0);
 
-    const setProgressOptimized = useCallback((value) => {
-        pendingProgressRef.current = value;
-        if (rafRef.current) return;
+    const setProgress = useCallback((pct) => {
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
         rafRef.current = requestAnimationFrame(() => {
             rafRef.current = null;
-            setUploadProgress(pendingProgressRef.current);
+            setUploadProgress(pct);
         });
     }, []);
 
-    const uploadFile = useCallback(async (file, overrideToken) => {
-        // Validate
-        const validation = validateFile(file, serverConfig.maxFileSize);
-        if (!validation.valid) {
-            onError?.(validation.error);
-            return;
-        }
+    const uploadFile = useCallback(async (file, { onFileReady } = {}) => {
+        if (!file) return;
+        if (isUploading) return;
 
-        const tokenToUse = overrideToken || sessionToken;
-
-        // Check if already uploading
-        if (isUploading) {
-            return;
-        }
-
-        // Check for session token
-        if (!tokenToUse) {
-            onError?.('Session token not available');
+        if (file.size > MAX_FILE_SIZE) {
+            onError?.(`File too large. Max size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`);
             return;
         }
 
         setIsUploading(true);
-        setProgressOptimized(0);
+        setProgress(0);
 
         try {
-            // Real upload progress (bytes sent) with UI-throttled updates.
-            const resData = await apiUploadFile(file, tokenToUse, (loaded, total) => {
-                if (!total) return;
-                // Real upload progress (bytes sent) with one decimal precision
-                const pct = (loaded / total) * 100;
-                setProgressOptimized(pct);
+            // Step 1: Ensure session
+            if (!hasSession()) {
+                await initSession();
+            }
+
+            // Step 2: Get presigned upload URL
+            const { id, uploadUrl } = await getUploadUrl(
+                file.name,
+                file.type || 'application/octet-stream',
+                file.size
+            );
+
+            // Step 3: Upload directly to B2 via XHR (for progress tracking)
+            await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('PUT', uploadUrl, true);
+                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) setProgress((e.loaded / e.total) * 95);
+                };
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) resolve();
+                    else reject(new Error(`Storage upload failed (${xhr.status}): ${xhr.responseText}`));
+                };
+                xhr.onerror = () => reject(new Error('Network error during upload'));
+                xhr.send(file);
             });
-            setProgressOptimized(100);
 
-            const cdnBase =
-                typeof window !== 'undefined' && window.APP_CONFIG && window.APP_CONFIG.FILES_CDN_BASE
-                    ? String(window.APP_CONFIG.FILES_CDN_BASE).replace(/\/+$/, '')
-                    : '';
-            const fileUrl =
-                cdnBase && resData.id
-                    ? `${cdnBase}/temp/${resData.id}`
-                    : resData.url;
+            setProgress(97);
 
-            // Add file to state
-            const fileData = {
-                id: resData.id,
+            // Step 4: Confirm with backend
+            const fileData = await confirmUpload(id);
+            setProgress(100);
+
+            onFileReady?.({
+                id: fileData.id,
                 name: file.name,
-                url: fileUrl,
-                type: file.type || 'text/plain',
-                expires: resData.expires_at,
-                created: resData.created_at,
-                canExtend: resData.can_extend !== false
-            };
+                url: fileData.url,
+                type: file.type || 'application/octet-stream',
+                expires: fileData.expires_at,
+                created: fileData.created_at,
+                canExtend: fileData.can_extend !== false,
+            });
 
-            addFile(fileData);
             onSuccess?.('FILE UPLOADED. NSA NOTIFIED.');
-        } catch (error) {
-            console.error(error);
-            onError?.(error.message || 'Upload failed.');
+        } catch (err) {
+            console.error('[Upload error]', err);
+            onError?.(err.message || 'Upload failed');
         } finally {
             setIsUploading(false);
+            setUploadProgress(0);
             if (rafRef.current) {
                 cancelAnimationFrame(rafRef.current);
                 rafRef.current = null;
             }
-            setUploadProgress(0);
         }
-    }, [
-        isUploading,
-        sessionToken,
-        serverConfig.maxFileSize,
-        setIsUploading,
-        apiUploadFile,
-        setProgressOptimized,
-        addFile,
-        onSuccess,
-        onError
-    ]);
+    }, [isUploading, setProgress, onSuccess, onError]);
 
-    return {
-        uploadFile,
-        isUploading,
-        uploadProgress
-    };
+    return { uploadFile, isUploading, uploadProgress };
 }

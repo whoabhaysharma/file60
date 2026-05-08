@@ -12,7 +12,6 @@ export function CodeEditor({ onUpload, isUploading, uploadProgress }) {
     const editorRef = useRef(null);
     const containerRef = useRef(null);
     const [ext, setExt] = useState('html');
-    const { isInitializing } = useApp();
 
     useEffect(() => {
         if (!containerRef.current || editorRef.current) return;
@@ -42,7 +41,7 @@ export function CodeEditor({ onUpload, isUploading, uploadProgress }) {
     }, [ext]);
 
     const handleUpload = () => {
-        if (!editorRef.current || isInitializing) return;
+        if (!editorRef.current) return;
 
         const code = editorRef.current.getValue().trim();
         if (!code) return;
@@ -75,7 +74,6 @@ export function CodeEditor({ onUpload, isUploading, uploadProgress }) {
                     value={ext}
                     onChange={(e) => setExt(e.target.value)}
                     className="bg-black text-accent text-[9px] border-[1px] border-accent/50 px-2 py-0.5 uppercase font-bold outline-none cursor-pointer"
-                    disabled={isInitializing}
                 >
                     <option value="html">index.html</option>
                     <option value="js">script.js</option>
@@ -101,13 +99,9 @@ export function CodeEditor({ onUpload, isUploading, uploadProgress }) {
             ) : (
                 <button
                     onClick={handleUpload}
-                    disabled={isInitializing}
-                    className={`active-press border-t-[4px] border-ink py-4 font-black text-xs uppercase transition-colors shrink-0 ${!isInitializing
-                        ? 'bg-accent text-black hover:bg-white cursor-pointer'
-                        : 'bg-gray-400 cursor-not-allowed opacity-60'
-                        }`}
+                    className="active-press border-t-[4px] border-ink py-4 font-black text-xs uppercase transition-colors shrink-0 bg-accent text-black hover:bg-white cursor-pointer"
                 >
-                    {isInitializing ? 'INITIALIZING...' : 'SHIP IT TO PROD'}
+                    SHIP IT TO PROD
                 </button>
             )}
         </div>

@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { formatRemainingTime, calculateTimePercentage } from '../utils/time.js';
+import { useApp } from '../context/AppContext.jsx';
+import { ExtendAdGateModal } from './ExtendAdGateModal.jsx';
 
 export function FileCard({ file, onRemove }) {
     const [timeDisplay, setTimeDisplay] = useState('Calculating...');
     const [timePercentage, setTimePercentage] = useState(100);
+    const [isExtending, setIsExtending] = useState(false);
+    const [extendAdOpen, setExtendAdOpen] = useState(false);
+    const { updateFile } = useApp();
 
 
     useEffect(() => {
@@ -31,6 +36,23 @@ export function FileCard({ file, onRemove }) {
 
         return () => clearInterval(interval);
     }, [file, onRemove]);
+
+    const handleExtendClick = () => {
+        if (isExtending) return;
+        setExtendAdOpen(true);
+    };
+
+    const handleExtendAfterAd = async (res) => {
+        setIsExtending(true);
+        try {
+            updateFile(file.id, {
+                expires: res.expires_at,
+                canExtend: res.can_extend !== false
+            });
+        } finally {
+            setIsExtending(false);
+        }
+    };
 
     const handleCopy = async (e) => {
         try {
@@ -75,6 +97,17 @@ export function FileCard({ file, onRemove }) {
                     COPY LINK
                 </button>
 
+                {file.canExtend !== false && (
+                    <button
+                        type="button"
+                        onClick={handleExtendClick}
+                        disabled={isExtending}
+                        className={`flex-grow border-[4px] border-ink py-3 font-black text-xs uppercase transition-all shadow-brutal hover:shadow-brutal-sm hover:translate-x-[4px] hover:translate-y-[4px] active:translate-x-[8px] active:translate-y-[8px] active:shadow-none ${isExtending ? 'bg-ink text-bg opacity-50 cursor-wait' : 'bg-bg text-ink'}`}
+                    >
+                        {isExtending ? '...' : 'EXTEND'}
+                    </button>
+                )}
+
                 <button
                     onClick={() => onRemove(file.id)}
                     className="w-16 bg-alert text-white border-[4px] border-ink font-black text-xl flex items-center justify-center transition-all shadow-brutal hover:shadow-brutal-sm hover:translate-x-[4px] hover:translate-y-[4px] active:translate-x-[8px] active:translate-y-[8px] active:shadow-none"
@@ -93,6 +126,14 @@ export function FileCard({ file, onRemove }) {
                     {timeDisplay}
                 </div>
             </div>
+
+            <ExtendAdGateModal
+                open={extendAdOpen}
+                fileId={file.id}
+                onSuccess={handleExtendAfterAd}
+                onError={() => {}}
+                onClose={() => setExtendAdOpen(false)}
+            />
         </div>
     );
 }

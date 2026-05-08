@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://file60.pages.dev/</loc>
+    <loc>https://file60.bythub.in/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://file60.pages.dev/privacy/</loc>
+    <loc>https://file60.bythub.in/privacy/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://file60.pages.dev/terms/</loc>
+    <loc>https://file60.bythub.in/terms/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://file60.pages.dev/dmca/</loc>
+    <loc>https://file60.bythub.in/dmca/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://file60.pages.dev/abuse/</loc>
+    <loc>https://file60.bythub.in/abuse/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

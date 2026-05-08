@@ -30,23 +30,29 @@ Go to **Environment** tab in your Edge Script and add:
 
 #### Required
 - `JWT_SECRET` – Random string for session tokens
-- `BUNNY_STORAGE_ZONE` – Your storage zone name
-- `BUNNY_STORAGE_ACCESS_KEY` – Storage zone access key
-- `BUNNY_STORAGE_REGION` – e.g., `Falkenstein`, `NewYork`, `Singapore`
+- `B2_ENDPOINT` – e.g., `https://s3.us-east-005.backblazeb2.com`
+- `B2_REGION` – e.g., `us-east-005`
+- `B2_ACCESS_KEY_ID` – B2 Application Key ID
+- `B2_SECRET_ACCESS_KEY` – B2 Application Key
+- `B2_BUCKET_NAME` – Your B2 bucket name
 - `BUNNY_PUBLIC_URL` – CDN URL for file links, e.g., `https://cdn-file60.bythub.in`
 
-#### Database (recommended for production)
+#### Database (required)
 Use **Database → Access → "Add Secrets to Edge Script"** to inject:
 - `BUNNY_DATABASE_URL` (format: `libsql://[id].lite.bunnydb.net`)
 - `BUNNY_DATABASE_AUTH_TOKEN`
 
-Or set them manually in the Environment tab.
+#### Storage CORS Setup
+Before uploading from the browser, you MUST set up CORS on your B2 bucket. Run:
+```bash
+node scripts/setup-b2-cors.mjs
+```
+(Ensure your `.env` has the correct B2 credentials first).
 
 #### Optional
 - `MAX_FILE_SIZE` – Max upload bytes (default: 100MB)
 - `CORS_ORIGIN` – Override CORS origin (default: `*`)
-- `VERIFY_STORAGE_LIST=1` – List `/temp/` after upload to confirm file landed (debugging only)
-- `ALLOW_DB_HEALTH_DIAG=1` – Allow `?db=1` health diagnostics on public URLs (otherwise localhost-only)
+- `ALLOW_DB_HEALTH_DIAG=1` – Allow health diagnostics on public URLs
 
 ### 4. Verify deployment
 

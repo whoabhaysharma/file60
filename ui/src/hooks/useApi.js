@@ -1,120 +1,18 @@
-import { useCallback } from 'react';
-import { useApp } from '../context/AppContext.jsx';
-import { useConfig } from '../context/ConfigContext.jsx';
-
 /**
- * Custom hook for API operations
+ * useApi.js — Thin hook wrapper around api.js for React components.
+ * Use the functions from api.js directly when possible.
  */
+import { useCallback } from 'react';
+import { initSession, startAdGate, extendFile } from '../api.js';
+
 export function useApi() {
-    const { sessionToken, setSessionToken, setSessionReady } = useApp();
-    const { apiUrl, updateServerConfig } = useConfig();
-
-    const checkSession = useCallback(async () => {
-        try {
-            const response = await fetch(`${apiUrl}/api/session`, {
-                credentials: 'include',
-                headers: sessionToken && typeof sessionToken === 'string'
-                    ? { 'x-session-token': sessionToken }
-                    : undefined
-            });
-            if (response.status === 200) {
-                const data = await response.json();
-                if (typeof data.session_token === 'string' && data.session_token.length > 0) {
-                    setSessionToken(data.session_token);
-                } else {
-                    setSessionToken(true);
-                }
-                if (data.config) updateServerConfig(data.config);
-                return true;
-            }
-            return false;
-        } catch (e) {
-            return false;
-        }
-    }, [apiUrl, sessionToken, setSessionToken, updateServerConfig]);
-
-    const initSession = useCallback(async (turnstileToken) => {
-        try {
-            if (!apiUrl) {
-                console.warn('API URL not configured. Please set window.APP_CONFIG.API_URL in config.js');
-                return;
-            }
-
-            const headers = {};
-            if (turnstileToken) {
-                headers['x-turnstile-token'] = turnstileToken;
-            }
-
-            const response = await fetch(`${apiUrl}/api/session`, {
-                method: 'POST',
-                credentials: 'include',
-                headers
-            });
-
-            if (!response.ok) {
-                const details = await response.text().catch(() => '');
-                throw new Error(`Failed to initialize session (${response.status})${details ? `: ${details}` : ''}`);
-            }
-
-            // Cookie is set automatically by the browser from Set-Cookie header
-            const data = await response.json();
-            setSessionToken(data.session_token || true); // Prefer explicit token for header auth fallback
-            if (data.config) updateServerConfig(data.config);
-            setSessionReady(true);
-            return data;
-        } catch (error) {
-            if (error instanceof TypeError) {
-                throw new Error('Backend API is not reachable. Start backend before uploading.');
-            }
-            console.error('Init session error:', error);
-            throw error;
-        }
-    }, [apiUrl, setSessionToken, setSessionReady, updateServerConfig]);
-
-    const uploadFile = useCallback((file, uploadSessionToken, onProgress) => {
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', `${apiUrl}/api/create-file`, true);
-            xhr.withCredentials = true;
-            xhr.setRequestHeader('X-File-Type', file.type || 'application/octet-stream');
-            xhr.setRequestHeader('X-File-Size', file.size.toString());
-            xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
-            if (uploadSessionToken && typeof uploadSessionToken === 'string') {
-                xhr.setRequestHeader('x-session-token', uploadSessionToken);
-            }
-
-            xhr.upload.onprogress = (event) => {
-                if (!event.lengthComputable || typeof onProgress !== 'function') return;
-                onProgress(event.loaded, event.total);
-            };
-
-            xhr.onerror = () => {
-                reject(new Error('Network error while uploading.'));
-            };
-
-            xhr.onload = () => {
-                const raw = xhr.responseText || '';
-                if (xhr.status < 200 || xhr.status >= 300) {
-                    reject(new Error(`Failed to upload (${xhr.status})${raw ? `: ${raw}` : ''}`));
-                    return;
-                }
-
-                try {
-                    resolve(JSON.parse(raw));
-                } catch {
-                    reject(new Error('Upload succeeded but response was not valid JSON.'));
-                }
-            };
-
-            xhr.send(file);
-        });
-    }, [apiUrl]);
-
-
+    const initSessionFn = useCallback(() => initSession(), []);
+    const startAdGateFn = useCallback((fileId) => startAdGate(fileId), []);
+    const extendFileFn = useCallback((id, token) => extendFile(id, token), []);
 
     return {
-        initSession,
-        uploadFile,
-        checkSession
+        initSession: initSessionFn,
+        startAdGate: startAdGateFn,
+        extendFile: extendFileFn,
     };
 }

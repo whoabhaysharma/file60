@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://file60.pages.dev/sitemap.xml
+Sitemap: https://file60.bythub.in/sitemap.xml
