@@ -11,7 +11,7 @@ export function ExtendAdGateModal({ open, fileId, onSuccess, onError, onClose })
     const { startAdGate, extendFile } = useApi();
     const adHostRef = useRef(null);
     const autoExtendStartedRef = useRef(false);
-    const [phase, setPhase] = useState('idle'); // idle | loading | ready | extending | error
+    const [phase, setPhase] = useState('idle'); // idle | loading | adblock | ready | extending | error
     const [errorMsg, setErrorMsg] = useState('');
     const [adGateToken, setAdGateToken] = useState(null);
     const [waitSeconds, setWaitSeconds] = useState(30);
@@ -21,6 +21,19 @@ export function ExtendAdGateModal({ open, fileId, onSuccess, onError, onClose })
     const phaseRef = useRef(phase);
     openRef.current = open;
     phaseRef.current = phase;
+
+    const checkAdBlock = useCallback(async () => {
+        try {
+            // Try to fetch a well-known ad script. If blocked, it will throw.
+            const res = await fetch("https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js", {
+                method: 'HEAD',
+                mode: 'no-cors'
+            }).catch(() => null);
+            return !res;
+        } catch (e) {
+            return true;
+        }
+    }, []);
 
     const reset = useCallback(() => {
         autoExtendStartedRef.current = false;
@@ -42,6 +55,14 @@ export function ExtendAdGateModal({ open, fileId, onSuccess, onError, onClose })
         (async () => {
             setPhase('loading');
             setErrorMsg('');
+
+            // Check for adblocker first
+            const isBlocked = await checkAdBlock();
+            if (isBlocked && !cancelled) {
+                setPhase('adblock');
+                return;
+            }
+
             try {
                 const data = await startAdGate(fileId);
                 if (cancelled) return;
@@ -63,7 +84,7 @@ export function ExtendAdGateModal({ open, fileId, onSuccess, onError, onClose })
         return () => {
             cancelled = true;
         };
-    }, [open, fileId, startAdGate, reset]);
+    }, [open, fileId, startAdGate, reset, checkAdBlock]);
 
     useEffect(() => {
         if (!open || phase !== 'ready' || !adHostRef.current) return;
@@ -161,13 +182,34 @@ export function ExtendAdGateModal({ open, fileId, onSuccess, onError, onClose })
                 <h2 id="extend-ad-title" className="text-lg font-black uppercase text-ink">
                     Extend storage — watch sponsor
                 </h2>
-                <p className="text-xs font-bold text-ink/80 uppercase">
-                    After {waitSeconds} seconds your storage extends automatically. You can close this dialog only if an
-                    error is shown.
-                </p>
 
                 {phase === 'loading' && (
-                    <p className="text-sm font-black uppercase text-accent">Loading ad gate…</p>
+                    <div className="py-10 flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-[4px] border-ink border-t-accent animate-spin" />
+                        <p className="text-sm font-black uppercase text-accent">Summoning the ad fairy…</p>
+                    </div>
+                )}
+
+                {phase === 'adblock' && (
+                    <div className="py-8 bg-alert/10 border-[4px] border-alert p-6 flex flex-col gap-5">
+                        <h3 className="text-2xl font-black text-alert uppercase italic">SHIELDS DOWN, CAPTAIN! 🛡️</h3>
+                        <p className="text-sm font-bold text-ink uppercase leading-tight">
+                            {[
+                                "Our ad-eating hamsters are starving. Feed them by disabling AdBlock?",
+                                "Your AdBlock is so strong it's blocking our server's lunch.",
+                                "No ads = No extension. The hamsters have spoken.",
+                                "AdBlocker detected: The Extension Fairy just went on strike.",
+                                "Please lower your shield, we come in peace (and ads).",
+                                "Even superheroes have to pay rent. Disable AdBlock to help us!"
+                            ][Math.floor(Math.random() * 6)]}
+                        </p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="bg-alert text-white border-[4px] border-ink py-4 font-black text-lg uppercase shadow-brutal hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+                        >
+                            OKAY, I'LL FEED THE HAMSTERS
+                        </button>
+                    </div>
                 )}
 
                 {phase === 'error' && (
@@ -176,6 +218,9 @@ export function ExtendAdGateModal({ open, fileId, onSuccess, onError, onClose })
 
                 {(phase === 'ready' || phase === 'extending') && (
                     <>
+                        <p className="text-xs font-bold text-ink/80 uppercase">
+                            After {waitSeconds} seconds your storage extends automatically.
+                        </p>
                         <div
                             ref={adHostRef}
                             className="min-h-[100px] border-[4px] border-ink bg-terminal flex items-center justify-center overflow-hidden"
